@@ -1,0 +1,27 @@
+import express from 'express';
+import {
+    adminRegister,
+    signupUser,
+    loginUserOrAdmin,
+    logoutUser,
+    forgetPassword,
+    resetPassword,
+    homePage,
+    getErrorPage,
+} from '../controllers/authController.js';
+import { isAuthenticated } from '../middleware/isAuthenticated.js';
+import { uploadProfilePic } from '../middleware/multer.js';
+
+const router = express.Router();
+
+router.get('/', homePage);
+router.post('/adminRegister', adminRegister);
+router.post('/signupUser', uploadProfilePic.single('profilePic'), signupUser);
+router.post('/loginUserOrAdmin', loginUserOrAdmin);
+router.get('/logout', isAuthenticated, logoutUser);
+router.post('/forgetPassword', forgetPassword);
+router.post('/reset-password', resetPassword);
+router.get('/error', getErrorPage);
+
+
+export default router;
