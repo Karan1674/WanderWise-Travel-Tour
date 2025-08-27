@@ -1,0 +1,176 @@
+import { useSelector } from 'react-redux';
+import { NavLink } from 'react-router-dom';
+
+function Header() {
+  const user = useSelector((state) => state.auth.user);
+
+  return (
+    <header id="masthead" className="site-header header-primary">
+      <div className="top-header">
+        <div className="container">
+          <div className="row">
+            <div className="col-lg-8 d-none d-lg-block">
+              <div className="header-contact-info">
+                <ul>
+                  <li>
+                    <a href="#">
+                      <i className="fas fa-phone-alt"></i> +01 (977) 2599 12
+                    </a>
+                  </li>
+                  <li>
+                    <a href="mailto:info@Travel.com">
+                      <i className="fas fa-envelope"></i> company@domain.com
+                    </a>
+                  </li>
+                  <li>
+                    <i className="fas fa-map-marker-alt"></i> 3146 Koontz Lane, California
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div className="col-lg-4 d-flex justify-content-lg-end justify-content-between">
+              <div className="header-social social-links">
+                <ul>
+                  <li>
+                    <a href="#">
+                      <i className="fab fa-facebook-f" aria-hidden="true"></i>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#">
+                      <i className="fab fa-twitter" aria-hidden="true"></i>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#">
+                      <i className="fab fa-instagram" aria-hidden="true"></i>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#">
+                      <i className="fab fa-linkedin" aria-hidden="true"></i>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+              <div className="header-search-icon">
+                <button className="search-icon">
+                  <i className="fas fa-search"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="bottom-header">
+        <div className="container d-flex justify-content-between align-items-center">
+          <div className="site-identity">
+            <h1 className="site-title">
+              <NavLink to="/">
+                <img className="white-logo" src="/assets/images/logoImage2.png" alt="logo" />
+                <img className="black-logo" src="/assets/images/logoImage1.png" alt="logo" />
+              </NavLink>
+            </h1>
+          </div>
+          <div className="main-navigation d-none d-lg-block">
+            <nav id="navigation" className="navigation">
+              <ul>
+                <li>
+                  <NavLink to="/" end>
+                    Home
+                  </NavLink>
+                </li>
+                <li className="menu-item-has-children">
+                  <a href="#">Tour</a>
+                  <ul>
+                    <li>
+                      <NavLink to="/destination">Destination</NavLink>
+                    </li>
+                    <li>
+                      <NavLink to="/tour-packages">Tour Packages</NavLink>
+                    </li>
+                    <li>
+                      <NavLink to="/package-offer">Package Offer</NavLink>
+                    </li>
+                  </ul>
+                </li>
+                <li className="menu-item-has-children">
+                  <a href="#">Discover</a>
+                  <ul>
+                    <li>
+                      <NavLink to="/about">About</NavLink>
+                    </li>
+                    <li>
+                      <NavLink to="/services">Service</NavLink>
+                    </li>
+                    <li>
+                      <NavLink to="/careers">Career</NavLink>
+                    </li>
+                    <li>
+                      <NavLink to="/tour-guide">Tour Guide</NavLink>
+                    </li>
+                    <li>
+                      <NavLink to="/gallery">Gallery</NavLink>
+                    </li>
+                    <li>
+                      <NavLink to="/faq">FAQ</NavLink>
+                    </li>
+                    <li>
+                      <NavLink to="/testimonials">Testimonial</NavLink>
+                    </li>
+                    <li>
+                      <NavLink to="/contact">Contact</NavLink>
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  <NavLink to="/products">Shop</NavLink>
+                </li>
+                <li>
+                  <NavLink to="/blog">Blog</NavLink>
+                </li>
+                {user ? (
+                  <li className="menu-item-has-children">
+                    <a href="#">Dashboard</a>
+                    <ul>
+                      <li>
+                        <NavLink to="/user-profile">Profile</NavLink>
+                      </li>
+                      <li>
+                        <NavLink to="/user-carts">Carts</NavLink>
+                      </li>
+                      <li>
+                        <NavLink to="/userBookingPage">Bookings</NavLink>
+                      </li>
+                      <li>
+                        <NavLink to="/applied-careers">Applied Careers</NavLink>
+                      </li>
+                      <li>
+                        <NavLink to="/wishlist">Wishlist</NavLink>
+                      </li>
+                      <li>
+                        <NavLink to="/logout">Logout</NavLink>
+                      </li>
+                    </ul>
+                  </li>
+                ) : (
+                  <li>
+                    <NavLink to="/login">Login</NavLink>
+                  </li>
+                )}
+              </ul>
+            </nav>
+          </div>
+          <div className="header-btn">
+            <NavLink to="/tour-packages" className="button-primary">
+              BOOK NOW
+            </NavLink>
+          </div>
+        </div>
+      </div>
+      <div className="mobile-menu-container"></div>
+    </header>
+  );
+}
+
+export default Header;
