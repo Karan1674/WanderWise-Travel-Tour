@@ -1,14 +1,14 @@
 import { useSelector } from 'react-redux';
 import { Navigate } from 'react-router-dom';
 
-function ProtectedRoute({ children, allowedRoles }) {
+function ProtectedRoute({ children }) {
   const { user, userType } = useSelector((state) => state.auth);
 
   if (!user || !userType) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/" />;
   }
 
-  if (!allowedRoles.includes(userType)) {
+  if (!['admin','agent'].includes(userType)) {
     return <Navigate to="/error" />;
   }
 

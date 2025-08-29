@@ -15,6 +15,8 @@ function Layout() {
       window.runCustomInit();
     }
   }, [location]);
+
+  
   return (
     <div className='client-layout'>
       {/* <Loader /> */}

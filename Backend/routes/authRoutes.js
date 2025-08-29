@@ -18,7 +18,7 @@ router.get('/', homePage);
 router.post('/adminRegister', adminRegister);
 router.post('/signupUser', uploadProfilePic.single('profilePic'), signupUser);
 router.post('/loginUserOrAdmin', loginUserOrAdmin);
-router.get('/logout', isAuthenticated, logoutUser);
+router.post('/logout', isAuthenticated, logoutUser);
 router.post('/forgetPassword', forgetPassword);
 router.post('/reset-password', resetPassword);
 router.get('/error', getErrorPage);

@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config();
@@ -27,6 +28,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
 connectDB();
 
 app.use('/api/auth', authRoutes);
+app.use('/api/admin',adminRoutes)
 
 app.use((req, res) => {
     res.status(404).json({ message: 'Page Not Found', type: 'error', status: 404 });

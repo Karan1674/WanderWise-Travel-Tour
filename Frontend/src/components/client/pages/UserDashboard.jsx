@@ -2,40 +2,34 @@ import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { toast } from 'react-toastify';
 
-function Home() {
-  const userType = useSelector((state) => state.auth.userType);
-  const navigate = useNavigate();
-  const [backendData, setBackendData] = useState(null);
+const UserDashboard = () => {
 
-  useEffect(() => {
-
-      const fetchHomeData = async () => {
-        try {
-          const apiUrl = import.meta.env.VITE_API_URL ;
-          const response = await axios.get(`${apiUrl}/api/auth/`, { withCredentials: true });
-          const data = response.data;
-          console.log('Home page backend response:', data);
-          if (data.success) {
-            toast[data.type](data.message);
-          } 
-          
-          if (data.redirect) { 
-            navigate(data.redirect, { replace: true });
-          } else {
-            setBackendData(data);
+    const userType = useSelector((state) => state.auth.userType);
+    const navigate = useNavigate();
+    const [backendData, setBackendData] = useState(null);
+  
+    useEffect(() => {
+  
+        const fetchHomeData = async () => {
+          try {
+            const apiUrl = import.meta.env.VITE_API_URL ;
+            const response = await axios.get(`${apiUrl}/api/auth/`, { withCredentials: true });
+            const data = response.data;
+            console.log('Home page backend response:', data);
+            if (data.redirect) { 
+              navigate(data.redirect, { replace: true });
+            } else {
+              setBackendData(data);
+            }
+          } catch (error) {
+            console.error('Error fetching home page data:', error);
+            setBackendData({ message: 'Error fetching data', error: error.message });
           }
-        } catch (error) {
-          console.error('Error fetching home page data:', error);
-          setBackendData({ message: 'Error fetching data', error: error.message });
-        }
-      };
-      fetchHomeData();
-
-  }, [ navigate]);
-
-
+        };
+        fetchHomeData();
+  
+    }, [ navigate]);
 
   return (
     <>
@@ -1012,7 +1006,7 @@ function Home() {
         </div>
       </section>
     </>
-  );
+  )
 }
 
-export default Home;
+export default UserDashboard

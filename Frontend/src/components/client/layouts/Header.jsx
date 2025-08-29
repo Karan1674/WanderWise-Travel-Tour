@@ -1,9 +1,35 @@
-import { useSelector } from 'react-redux';
-import { NavLink } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import axios from 'axios';
+import { clearUser } from '../../../redux/slices/authSlice';
+import { persistor } from '../../../redux/store';
 
 function Header() {
   const user = useSelector((state) => state.auth.user);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
+  const handleLogout = async () => {
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const response = await axios.post(`${apiUrl}/api/auth/logout`, {}, { withCredentials: true });
+      const data = response.data;
+      console.log(response)
+      if (data.success) {
+        dispatch(clearUser());
+        await persistor.purge();
+        toast.success(data.message);
+        navigate(data.redirect || '/');
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error(error.response?.data?.message || 'Error during logout');
+    }
+  };
+  
   return (
     <header id="masthead" className="site-header header-primary">
       <div className="top-header">
@@ -149,7 +175,7 @@ function Header() {
                         <NavLink to="/wishlist">Wishlist</NavLink>
                       </li>
                       <li>
-                        <NavLink to="/logout">Logout</NavLink>
+                        <NavLink to="#" onClick={handleLogout}>Logout</NavLink>
                       </li>
                     </ul>
                   </li>

@@ -8,8 +8,6 @@ import userModel from '../models/userModel.js';
 export const homePage = async (req, res) => {
     try {
         const token = req.cookies?.authToken;
-        let user = null;
-        let role = null;
 
         if (token) {
             const decoded = jwt.verify(token, process.env.SECRET_KEY);
@@ -17,22 +15,17 @@ export const homePage = async (req, res) => {
 
             let loginedUserData = await adminModel.findById(userId).select('-password -resetPasswordToken -resetPasswordExpires');
             if (loginedUserData) {
-                user = loginedUserData;
-                role = 'admin';
-                return res.json({ message: 'Redirect to Dashboard', type: 'info', redirect: '/dashboard', user, role, success:true });
+                return res.json({ message: 'Redirect to Dashboard', type: 'info', redirect: '/dashboard', success:true });
             }
 
             loginedUserData = await agentModel.findById(userId).select('-password -resetPasswordToken -resetPasswordExpires');
             if (loginedUserData) {
-                user = loginedUserData;
-                role = 'agent';
-                return res.json({ message: 'Redirect to Dashboard', type: 'info', redirect: '/dashboard', user, role, success:true });
+                return res.json({ message: 'Redirect to Dashboard', type: 'info', redirect: '/dashboard', success:true });
             }
 
             loginedUserData = await userModel.findById(userId).select('-password -resetPasswordToken -resetPasswordExpires');
             if (loginedUserData) {
-                user = loginedUserData;
-                role = 'User';
+                return res.json({ message: 'Redirect to Dashboard', type: 'info', redirect: '/UserDashboard', success:true });
             }
 
             if (!loginedUserData) {
@@ -41,15 +34,12 @@ export const homePage = async (req, res) => {
         }
 
         res.json({
-            user,
-            role,
             destinations: [],
             packages: [],
             blogs: [],
             testimonials: [],
-            message: null,
-            type: null,
-            success:true
+            success:true,
+            type:'info'
         });
     } catch (error) {
         console.error('Home page error:', error);
@@ -162,7 +152,7 @@ export const loginUserOrAdmin = async (req, res) => {
             type: 'success',
             user: userData,
             role,
-            redirect: role === 'User' ? '/' : '/dashboard',
+            redirect: role === 'User' ? '/UserDashboard' : '/dashboard',
             success:true
         });
     } catch (error) {

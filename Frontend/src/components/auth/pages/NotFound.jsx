@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import '../../../styles/clientStyles.css'
-import '../../../styles/adminStyles.css'
 
 function NotFound() {
   return (

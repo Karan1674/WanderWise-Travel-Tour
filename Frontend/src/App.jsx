@@ -11,15 +11,26 @@ import ResetPassword from './components/auth/pages/ResetPassword';
 import ErrorPage from './components/auth/pages/ErrorPage';
 import NotFound from './components/auth/pages/NotFound';
 import RestrictedRoute from './components/auth/RestrictedRoute';
+import UserDashboard from './components/client/pages/UserDashboard';
+import AdminLayout from './components/admin/layouts/AdminLayout';
+import Dashboard from './components/admin/pages/Dashboard';
 
 function App() {
-
   return (
     <>
      <Routes>
       <Route element={<ClientLayout />}>
         <Route path="/" element={<Home />} />
+        <Route path="/UserDashboard" element={<UserDashboard/>} />
       </Route>
+
+
+      <Route element={<AdminLayout/>}>
+        <Route path="/dashboard" element={<Dashboard/>} />
+      </Route>
+
+
+
       <Route element={<AuthLayout />}>
         <Route
           path="/login"
@@ -70,6 +81,9 @@ function App() {
       <Route path="*" element={<NotFound />} />
       </Route>
 
+      {/* <Route element={<AdminLayout />}>
+        <Route path="/UserDashboard" element={<Dashboard/>} />
+      </Route> */}
 
     </Routes>
     </>

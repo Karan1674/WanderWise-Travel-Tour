@@ -5,7 +5,7 @@ function RestrictedRoute({ children }) {
   const { user, userType } = useSelector((state) => state.auth);
 
   if (user && userType) {
-    return <Navigate to={userType === 'User' ? '/' : '/dashboard'} />;
+    return <Navigate to={userType === 'User' ? '/UserDashboard' : '/dashboard'} />;
   }
 
   return children;
