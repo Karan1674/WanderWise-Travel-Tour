@@ -9,7 +9,7 @@ function ProtectedRoute({ children }) {
   }
 
   if (!['admin','agent'].includes(userType)) {
-    return <Navigate to="/error" />;
+    return <Navigate to="/" />;
   }
 
   return children;

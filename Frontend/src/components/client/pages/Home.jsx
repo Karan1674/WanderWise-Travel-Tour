@@ -1,39 +1,43 @@
 import { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { data, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
 function Home() {
-  const userType = useSelector((state) => state.auth.userType);
+  const { userType, user } = useSelector((state) => state.auth);
+
   const navigate = useNavigate();
   const [backendData, setBackendData] = useState(null);
 
   useEffect(() => {
 
-      const fetchHomeData = async () => {
-        try {
-          const apiUrl = import.meta.env.VITE_API_URL ;
-          const response = await axios.get(`${apiUrl}/api/auth/`, { withCredentials: true });
-          const data = response.data;
-          console.log('Home page backend response:', data);
-          if (data.success) {
-            toast[data.type](data.message);
-          } 
-          
-          if (data.redirect) { 
-            navigate(data.redirect, { replace: true });
-          } else {
+    const fetchHomeData = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL;
+        const apiEndpoint = user ? userType === 'User' ? "/client/UserDashboard" : '/admin/AdminDashboard' : '/auth/'
+        const response = await axios.get(`${apiUrl}/api${apiEndpoint}`, { withCredentials: true });
+        const data = response.data;
+
+        if (data.success) {
+          if (userType === 'user' || userType == 'null') {
             setBackendData(data);
           }
-        } catch (error) {
-          console.error('Error fetching home page data:', error);
-          setBackendData({ message: 'Error fetching data', error: error.message });
+          else if(userType === 'admin' || userType==='agent') {
+            navigate('/dashboard', { replace: true });
+          }
+          else{
+            navigate('/', { replace: true });
+          }
         }
-      };
-      fetchHomeData();
+      } catch (error) {
+        console.error('Error fetching home page data:', error);
+        toast.error(error.response.data.message)
+      }
+    };
+    fetchHomeData();
 
-  }, [ navigate]);
+  }, [backendData, navigate]);
 
 
 

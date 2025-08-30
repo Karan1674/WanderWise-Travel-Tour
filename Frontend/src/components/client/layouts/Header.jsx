@@ -20,7 +20,7 @@ function Header() {
         dispatch(clearUser());
         await persistor.purge();
         toast.success(data.message);
-        navigate(data.redirect || '/');
+        navigate('/');
       } else {
         toast.error(data.message);
       }

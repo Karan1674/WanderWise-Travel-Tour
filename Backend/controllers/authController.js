@@ -7,30 +7,25 @@ import userModel from '../models/userModel.js';
 
 export const homePage = async (req, res) => {
     try {
-        const token = req.cookies?.authToken;
+        const token = req.cookies?.token;
 
         if (token) {
             const decoded = jwt.verify(token, process.env.SECRET_KEY);
             const userId = decoded.userId;
-
-            let loginedUserData = await adminModel.findById(userId).select('-password -resetPasswordToken -resetPasswordExpires');
-            if (loginedUserData) {
-                return res.json({ message: 'Redirect to Dashboard', type: 'info', redirect: '/dashboard', success:true });
-            }
-
-            loginedUserData = await agentModel.findById(userId).select('-password -resetPasswordToken -resetPasswordExpires');
-            if (loginedUserData) {
-                return res.json({ message: 'Redirect to Dashboard', type: 'info', redirect: '/dashboard', success:true });
-            }
-
-            loginedUserData = await userModel.findById(userId).select('-password -resetPasswordToken -resetPasswordExpires');
-            if (loginedUserData) {
-                return res.json({ message: 'Redirect to Dashboard', type: 'info', redirect: '/UserDashboard', success:true });
-            }
-
-            if (!loginedUserData) {
-                res.clearCookie('authToken');
-            }
+            let loginedUserData =
+            (await adminModel.findById(userId).select("-password -resetPasswordToken -resetPasswordExpires")) ||
+            (await agentModel.findById(userId).select("-password -resetPasswordToken -resetPasswordExpires")) ||
+            (await userModel.findById(userId).select("-password -resetPasswordToken -resetPasswordExpires"));
+    
+          if (loginedUserData) {
+            return res.json({
+              message: "Redirect to Dashboard",
+              type: "info",
+              success: true,
+            });
+          } else {
+            res.clearCookie("token");
+          }
         }
 
         res.json({
@@ -53,7 +48,7 @@ export const adminRegister = async (req, res) => {
 
         const existingAdmin = await adminModel.findOne({ email });
         if (existingAdmin) {
-            return res.status(400).json({ message: 'Admin already exists', type: 'error', success:false });
+            return res.json({ message: 'Admin already exists', type: 'error', success:false });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -68,7 +63,7 @@ export const adminRegister = async (req, res) => {
         });
 
         await newAdmin.save();
-        res.status(201).json({ message: 'Admin registered successfully', type: 'success', success:true, success:true, redirect: '/login' });
+        res.json({ message: 'Admin registered successfully', type: 'success', success:true, success:true });
     } catch (error) {
         console.error('Admin Register Error:', error);
         res.status(500).json({ message: 'Server error during registration', type: 'error' });
@@ -81,7 +76,7 @@ export const signupUser = async (req, res) => {
 
         const existingUser = await userModel.findOne({ email });
         if (existingUser) {
-            return res.status(400).json({ message: 'Email already registered', type: 'error', success:false });
+            return res.json({ message: 'Email already registered', type: 'error', success:false });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -101,7 +96,7 @@ export const signupUser = async (req, res) => {
         });
 
         await newUser.save();
-        res.status(201).json({ message: 'User registered successfully', type: 'success', success:true, redirect: '/login' });
+        res.json({ message: 'User registered successfully', type: 'success', success:true });
     } catch (error) {
         console.error('Signup error:', error);
         res.status(500).json({ message: 'Server error during signup', type: 'error' });
@@ -126,18 +121,18 @@ export const loginUserOrAdmin = async (req, res) => {
         }
 
         if (!user) {
-            return res.status(404).json({ message: 'User not found', type: 'error', success:false });
+            return res.json({ message: 'User not found', type: 'error', success:false });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid credentials', type: 'error', success:false });
+            return res.json({ message: 'Invalid credentials', type: 'error', success:false });
         }
 
         const tokenData = { userId: user._id };
         const token = jwt.sign(tokenData, process.env.SECRET_KEY, { expiresIn: '1d' });
 
-        res.cookie('authToken', token, {
+        res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             maxAge: 24 * 60 * 60 * 1000,
@@ -147,12 +142,11 @@ export const loginUserOrAdmin = async (req, res) => {
             .findById(user._id)
             .select('-password -resetPasswordToken -resetPasswordExpires');
 
-        res.status(201).json({
+        res.json({
             message: 'Login successful',
             type: 'success',
             user: userData,
             role,
-            redirect: role === 'User' ? '/UserDashboard' : '/dashboard',
             success:true
         });
     } catch (error) {
@@ -163,8 +157,8 @@ export const loginUserOrAdmin = async (req, res) => {
 
 export const logoutUser = async (req, res) => {
     try {
-        res.clearCookie('authToken');
-        res.json({ message: 'Logged out successfully', type: 'success', redirect: '/', success:true });
+        res.clearCookie('token');
+        res.json({ message: 'Logged out successfully', type: 'success', success:true });
     } catch (error) {
         console.error('Logout Error:', error);
         res.status(500).json({ message: 'Error during logout', type: 'error' });
@@ -176,7 +170,7 @@ export const forgetPassword = async (req, res) => {
         const { email } = req.body;
 
         if (!email) {
-            return res.status(400).json({ message: 'Email is required', type: 'error', success:false });
+            return res.json({ message: 'Email is required', type: 'error', success:false });
         }
 
         let user = await agentModel.findOne({ email });
@@ -190,7 +184,7 @@ export const forgetPassword = async (req, res) => {
             userType = 'User';
         }
         if (!user) {
-            return res.status(404).json({ message: 'No user found with this email', type: 'error', success:false });
+            return res.json({ message: 'No user found with this email', type: 'error', success:false });
         }
 
         const resetToken = crypto.randomBytes(32).toString('hex');
@@ -215,13 +209,13 @@ export const resetPassword = async (req, res) => {
         const { password, confirmPassword } = req.body;
 
         if (!token || !type || !['User', 'Agent', 'Admin'].includes(type)) {
-            return res.status(400).json({ message: 'Invalid or missing reset token or user type', type: 'error', success:false });
+            return res.json({ message: 'Invalid or missing reset token or user type', type: 'error', success:false });
         }
         if (!password || !confirmPassword) {
-            return res.status(400).json({ message: 'Both password fields are required', type: 'error', success:false });
+            return res.json({ message: 'Both password fields are required', type: 'error', success:false });
         }
         if (password !== confirmPassword) {
-            return res.status(400).json({ message: 'Passwords do not match', type: 'error', success:false });
+            return res.json({ message: 'Passwords do not match', type: 'error', success:false });
         }
 
         const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
@@ -244,7 +238,7 @@ export const resetPassword = async (req, res) => {
         }
 
         if (!user) {
-            return res.status(400).json({ message: 'Invalid or expired reset token', type: 'error', success:false });
+            return res.json({ message: 'Invalid or expired reset token', type: 'error', success:false });
         }
 
         user.password = await bcrypt.hash(password, 10);
@@ -252,20 +246,11 @@ export const resetPassword = async (req, res) => {
         user.resetPasswordExpires = undefined;
         await user.save();
 
-        res.json({ message: 'Password reset successfully', type: 'success', redirect: '/login', success:true });
+        res.json({ message: 'Password reset successfully', type: 'success', success:true });
     } catch (error) {
         console.error('Error resetting password:', error);
         res.status(500).json({ message: 'Failed to reset password', type: 'error' });
     }
 };
 
-export const getErrorPage = async (req, res) => {
-    try {
-        const status = parseInt(req.query.status) || 500;
-        const message = req.query.message || 'Something Went Wrong';
-        res.status(status).json({ message, type: 'error', status , success:true});
-    } catch (error) {
-        console.error('Error rendering error page:', error);
-        res.status(500).json({ message: 'Error rendering error page', type: 'error', status: 500 });
-    }
-};
+

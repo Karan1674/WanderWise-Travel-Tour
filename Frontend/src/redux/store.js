@@ -1,5 +1,4 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
-import authSlice from './slices/authSlice';
 import {
   persistStore,
   persistReducer,
@@ -12,35 +11,30 @@ import {
 } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import expireReducer from 'redux-persist-transform-expire';
+import authSlice from './slices/authSlice';
+import agentSlice from './slices/agentSlice';
 
-// Persist config for auth only
+// Persist config for auth slice only
 const authPersistConfig = {
   key: 'auth',
   storage,
   transforms: [
     expireReducer({
       expireSeconds: 86400, // 24 hours
-      expiredState: {},     // reset state after expiry
+      expiredState: {}, // Reset state after expiry
     }),
   ],
 };
 
-// Wrap only auth slice
+// Combine reducers
 const rootReducer = combineReducers({
   auth: persistReducer(authPersistConfig, authSlice),
+  agents: persistReducer(authPersistConfig, agentSlice)
 });
 
-// Persist root reducer
-const persistConfig = {
-  key: 'root',
-  version: 1,
-  storage,
-};
-
-const persistedReducer = persistReducer(persistConfig, rootReducer);
-
+// Create store
 const store = configureStore({
-  reducer: persistedReducer,
+  reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {

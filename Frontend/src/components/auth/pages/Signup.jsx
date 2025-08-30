@@ -46,7 +46,7 @@ function Signup() {
       if (data.success) {
         dispatch(setUser({ user: null, userType: null }));
         toast[data.type](data.message);
-        navigate(data.redirect || '/login');
+        navigate('/login');
       } else {
         toast[data.type](data.message);
       }

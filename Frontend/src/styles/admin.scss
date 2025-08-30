@@ -1,5 +1,4 @@
-.admin-layout {
-    /*------------------------------------------------------------------
+  /*------------------------------------------------------------------
 * Project:        Travele
 * Author:         Bosa Themes
 * URL:            https://themeforest.net/user/bosathemes
@@ -2144,6 +2143,61 @@
 .error-content .site-title img {
     max-width: 150px;
 }
-  /*# sourceMappingURL=style.css.map */
+
+.header-controls{
+  display: flex; 
+  flex-direction: row; 
+  justify-content: space-between; 
+  align-items: center; 
+  gap: 10px; 
+  margin-bottom: 20px;
+}
   
-  }
+.user-controls{
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  margin-bottom: 20px;
+}
+
+.user-controls #search-input{
+  width: 70%; 
+  padding: 8px 40px 8px 8px; 
+  border: 1px solid #ddd; 
+  border-radius: 4px; 
+  margin-right: 10px;
+} 
+
+.user-controls #status-filter{
+  width: 30%; 
+  padding: 8px; 
+  border: 1px solid #ddd; 
+  border-radius: 4px;
+}
+
+.user-controls #btnSubmit{
+  position: absolute; 
+  right: 40px; 
+  background: none; 
+  border: none; 
+  cursor: pointer;
+}
+
+.user-controls .form-group{
+  display: flex; 
+  align-items: center; 
+  position: relative;
+}
+.user-controls #search-form{
+  flex: 1; 
+  margin-right: 20px;
+}
+
+
+.user-controls #form-group .fa-search{
+  color: #007bff;
+}
+
+.user-controls .search-input{
+  width: 70%; padding: 8px 40px 8px 8px; border: 1px solid #ddd; border-radius: 4px; margin-right: 10px;
+}

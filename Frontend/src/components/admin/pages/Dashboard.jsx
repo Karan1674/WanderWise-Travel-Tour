@@ -18,21 +18,12 @@ function Dashboard() {
         });
         const data = response.data;
         if (data.success) {
-          if (data.redirect) {
-            toast[data.type](data.message);
-            navigate(data.redirect);
-          } else {
-            setDashboardData(data);
-            // toast.success(data.message);
-          }
-        } else {
-          toast[data.type](data.message);
-          navigate('/error');
+          setDashboardData(data);;
         }
+
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         toast.error(error.response?.data?.message || 'Failed to load dashboard');
-        navigate('/error');
       } finally {
         setLoading(false);
       }
@@ -40,13 +31,24 @@ function Dashboard() {
 
     if (['admin', 'agent'].includes(userType)) {
       fetchDashboardData();
-    } else {
-      navigate('/error');
-    }
+    } 
+    
   }, [navigate]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className='db-info-wrap'>
+      <div
+        className="d-flex justify-content-center align-items-center flex-column"
+        style={{ height: "100vh", backgroundColor: "#f9f9f9" }}
+      >
+        {/* Spinner */}
+        <div className="spinner-border text-primary" role="status" style={{ width: "3rem", height: "3rem" }}>
+        </div>
+
+        {/* Loading Text */}
+        <p className="mt-3 fw-semibold text-dark fs-5">Loading, please wait...</p>
+      </div>
+    </div>;
   }
 
   if (!dashboardData) {

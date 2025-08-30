@@ -6,30 +6,32 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 import { clearUser } from '../../../redux/slices/authSlice';
 import { persistor } from '../../../redux/store';
+import { clearAgentsData } from '../../../redux/slices/agentSlice';
 
 function AdminLayout() {
-    const {userType,user} = useSelector((state) => state.auth);
+    const { userType, user } = useSelector((state) => state.auth);
     const dispatch = useDispatch();
     const navigate = useNavigate();
-  
+
     const handleLogout = async () => {
-      try {
-        const apiUrl = import.meta.env.VITE_API_URL;
-        const response = await axios.post(`${apiUrl}/api/auth/logout`, {}, { withCredentials: true });
-        const data = response.data;
-        console.log(response)
-        if (data.success) {
-          dispatch(clearUser());
-          await persistor.purge();
-          toast.success(data.message);
-          navigate(data.redirect || '/');
-        } else {
-          toast.error(data.message);
+        try {
+            const apiUrl = import.meta.env.VITE_API_URL;
+            const response = await axios.post(`${apiUrl}/api/auth/logout`, {}, { withCredentials: true });
+            const data = response.data;
+            console.log(response)
+            if (data.success) {
+                dispatch(clearUser());
+                dispatch(clearAgentsData())
+                await persistor.purge();
+                toast.success(data.message);
+                navigate('/');
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+            toast.error(error.response?.data?.message || 'Error during logout');
         }
-      } catch (error) {
-        console.error('Logout error:', error);
-        toast.error(error.response?.data?.message || 'Error during logout');
-      }
     };
 
 
@@ -40,16 +42,16 @@ function AdminLayout() {
                     {/* Header */}
                     <div className="dashboard-header sticky-header">
                         <div className="content-left  logo-section pull-left">
-                            <h1><a href="/"><img style={{ height: '50px' }} src="/admin/assets/images/logoImage1.png" alt="" /></a></h1>
+                            <h1><a href="/dashboard"><img style={{ height: '50px' }} src="/admin/assets/images/logoImage1.png" alt="" /></a></h1>
                         </div>
                         <div className="heaer-content-right pull-right">
 
                             <div className="dropdown">
                                 <a className="dropdown-toggle" data-toggle="dropdown">
                                     <div className="dropdown-item profile-sec">
-                                    {user && user.profilePic && (
-  <img src={user.profilePic} alt="User Profile Picture" />
-)}
+                                        {user && user.profilePic && (
+                                            <img src={user.profilePic} alt="User Profile Picture" />
+                                        )}
 
                                         <span>My Account </span>
                                         <i className="fas fa-caret-down"></i>
@@ -72,10 +74,10 @@ function AdminLayout() {
                         <div id="dashboard-Navigation" className="slick-nav"></div>
                         <div id="navigation" className="navigation-container">
                             <ul>
-                                <li><Link to="/AdminDashboard"><i className="far fa-chart-bar"></i> Dashboard</Link></li>
-                        {user && userType=='admin' && (
-                            <li><Link to='/db-user-dashboard'><i className="fas fa-user"></i>Users</Link></li>
-                        )}        
+                                <li><Link to="/dashboard"><i className="far fa-chart-bar"></i> Dashboard</Link></li>
+                                {user && userType == 'admin' && (
+                                    <li><Link to='/db-user-dashboard'><i className="fas fa-user"></i>Users</Link></li>
+                                )}
                                 <li><Link to='/db-package-dashboard'><i className="fas fa-hotel"></i>Packages</Link></li>
                                 <li><Link to="/product-list"><i className="fas fa-store fa-3x"></i>Shop</Link></li>
                                 <li><Link to="/db-bookings"><i className="fas fa-shopping-cart fa-3x"></i>Bookings</Link></li>
@@ -90,22 +92,23 @@ function AdminLayout() {
                             </ul>
                         </div>
                     </div>
-              
-
-                {/* Main Content */}
-
-                <Outlet />
 
 
-                {/* Footer */}
-                <div className="copyrights">
-                    Copyright © 2021 Travele. All rights reserved.
+                    {/* Main Content */}
+
+                    <Outlet />
+
+
+
+                    {/* Footer */}
+                    <div className="copyrights">
+                        Copyright © 2021 Travele. All rights reserved.
+                    </div>
                 </div>
             </div>
-        </div>
 
-    </div >
-  );
+        </div >
+    );
 }
 
 export default AdminLayout;

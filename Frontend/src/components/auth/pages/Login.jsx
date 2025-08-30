@@ -28,6 +28,7 @@ function Login() {
       if (data.success) {
         dispatch(setUser({ user: data.user, userType: data.role }));
         toast[data.type](data.message);
+        data.role === 'User' ? '/UserDashboard' : '/dashboard'
         navigate(data.redirect);
       } 
       else{

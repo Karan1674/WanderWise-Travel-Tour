@@ -7,7 +7,6 @@ import {
     forgetPassword,
     resetPassword,
     homePage,
-    getErrorPage,
 } from '../controllers/authController.js';
 import { isAuthenticated } from '../middleware/isAuthenticated.js';
 import { uploadProfilePic } from '../middleware/multer.js';
@@ -21,7 +20,6 @@ router.post('/loginUserOrAdmin', loginUserOrAdmin);
 router.post('/logout', isAuthenticated, logoutUser);
 router.post('/forgetPassword', forgetPassword);
 router.post('/reset-password', resetPassword);
-router.get('/error', getErrorPage);
 
 
 export default router;

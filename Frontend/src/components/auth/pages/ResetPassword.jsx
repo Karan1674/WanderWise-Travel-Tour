@@ -28,7 +28,7 @@ function ResetPassword() {
       
       if (data.success) {
         toast[data.type](data.message);
-        navigate(data.redirect || '/login');
+        navigate('/login');
     
       } else {
         toast[data.type](data.message);
