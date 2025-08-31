@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 import DeleteModal from './DeleteModal';
 import Pagination from './Pagination';
-import { clearAgentsData, setAgentsData } from '../../../redux/slices/agentSlice';
+import { setAgentsData } from '../../../redux/slices/agentSlice';
 
 
 function AgentList() {
@@ -40,7 +40,6 @@ function AgentList() {
         }
       } catch (error) {
         console.error('Error fetching agents:', error);
-        toast.error(error.response?.data?.message || 'Failed to load agents');
       } finally {
         setLoading(false);
       }
@@ -51,7 +50,7 @@ function AgentList() {
     }
 
 
-  }, [navigate, location, initialPage, initialSearch, initialStatusFilter, userType, dispatch]);
+  }, [navigate, initialPage, initialSearch, initialStatusFilter, userType, dispatch]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -334,9 +333,7 @@ function AgentList() {
           key={`deleteModal_${agent._id}`}
           modalId={`deleteModal_${agent._id}`}
           entityName="Agent"
-          entityId={agent._id}
           apiEndpoint={`${import.meta.env.VITE_API_URL}/api/admin/delete-agent/${agent._id}`}
-          redirectPath={`/db-admin-created-agents?page=${currentPage}`}
         />
       ))}
       <Pagination

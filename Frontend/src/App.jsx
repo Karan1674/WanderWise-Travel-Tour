@@ -18,6 +18,10 @@ import AgentAdd from './components/admin/pages/AgentAdd';
 import AgentEdit from './components/admin/pages/AgentEdit';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import SignedInUsers from './components/admin/pages/SignedInUsers';
+import PackagesList from './components/admin/pages/PackagesList';
+import PackageAdd from './components/admin/pages/PackageAdd';
+import PackageEdit from './components/admin/pages/PackageEdit';
+import PackageDetail from './components/admin/pages/PackageDetail';
 
 
 function App() {
@@ -38,6 +42,11 @@ function App() {
           <Route path="/new-agent" element={<AgentAdd />} />
           <Route path="/edit-agent" element={<AgentEdit />} />
           <Route path="/db-signed-in-users" element={<SignedInUsers />} />
+          <Route path="/db-package-dashboard" element={<PackagesList/>} />
+          <Route path="/db-add-package" element={<PackageAdd/>} />
+          <Route path="/edit-package/:id" element={<PackageEdit/>} />
+          <Route path="/package-preview/:id" element={<PackageDetail/>} />
+
         </Route>
 
 

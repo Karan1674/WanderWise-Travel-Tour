@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 
-function DeleteModal({ modalId, entityName, entityId, apiEndpoint, redirectPath }) {
+function DeleteModal({ modalId, entityName, apiEndpoint}) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
