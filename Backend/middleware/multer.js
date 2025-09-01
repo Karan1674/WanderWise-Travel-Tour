@@ -47,3 +47,25 @@ export const uploadGallery = multer({
     },
     // limits: { files: 8 }, // Restrict to 8 files for gallery
 });
+
+
+
+// Career upload 
+const careerPicStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, join(__dirname, '../Uploads/career'));
+    },
+    filename: (req, file, cb) => {
+        cb(null, `${Date.now()}-${file.originalname}`);
+    },
+});
+
+export const uploadCareerPic = multer({
+    storage: careerPicStorage,
+    fileFilter: (req, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+            return cb(new Error('Only image files are allowed'), false);
+        }
+        cb(null, true);
+    },
+});

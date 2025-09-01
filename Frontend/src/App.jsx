@@ -22,7 +22,17 @@ import PackagesList from './components/admin/pages/PackagesList';
 import PackageAdd from './components/admin/pages/PackageAdd';
 import PackageEdit from './components/admin/pages/PackageEdit';
 import PackageDetail from './components/admin/pages/PackageDetail';
-
+import AdminAgentProfile from './components/admin/pages/AdminAgentProfile';
+import PackageBookingList from './components/admin/pages/PackageBookingList';
+import PackageBookingEdit from './components/admin/pages/PackageBookingEdit';
+import CouponList from './components/admin/pages/CouponList';
+import CouponAdd from './components/admin/pages/CouponAdd';
+import CouponDetails from './components/admin/pages/CouponDetails';
+import CouponEdit from './components/admin/pages/CouponEdit';
+import CareerList from './components/admin/pages/CareerList';
+import CareerAdd from './components/admin/pages/CareerAdd';
+import CareerDetail from './components/admin/pages/CareerDetail';
+import CareerEdit from './components/admin/pages/CareerEdit';
 
 function App() {
 
@@ -46,7 +56,19 @@ function App() {
           <Route path="/db-add-package" element={<PackageAdd/>} />
           <Route path="/edit-package/:id" element={<PackageEdit/>} />
           <Route path="/package-preview/:id" element={<PackageDetail/>} />
-
+          <Route path="/admin-agent-profile" element={<AdminAgentProfile/>} />
+          <Route path="/db-bookings" element={<PackageBookingList/>} />
+          <Route path="/package-booking/edit/:id" element={<PackageBookingEdit/>} />
+          <Route path="/coupon-list" element={<CouponList/>} />
+          <Route path="/new-coupon" element={<CouponAdd/>} />
+          <Route path="/coupon-details/:couponId" element={<CouponDetails/>} />
+          <Route path="/edit-coupon/:couponId" element={<CouponEdit/>} />
+          <Route path="/career-list" element={<CareerList/>} />
+          <Route path="/add-career" element={<CareerAdd/>} />
+          <Route path="/career-detail/:careerId" element={<CareerDetail/>} />
+          <Route path="/edit-career/:editCareerId" element={<CareerEdit/>} />
+          
+          
         </Route>
 
 

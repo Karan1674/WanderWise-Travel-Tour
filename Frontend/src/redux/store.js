@@ -11,32 +11,46 @@ import {
 } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import expireReducer from 'redux-persist-transform-expire';
+
 import authSlice from './slices/authSlice';
 import agentSlice from './slices/agentSlice';
 import packageSlice from './slices/packageSlice';
+import packageBookingSlice from './slices/packageBookingSlice';
+import couponSlice from './slices/couponSlice';
+import careerSlice from './slices/careerSlice';
 
-// Persist config for auth slice only
+
+const expireAuthAndOthers = expireReducer({
+  expireSeconds: 86400, // 24 hours
+  expiredState: {},
+  onExpire: () => {
+    storage.removeItem('persist:root'); 
+  },
+});
+
+// Root persist config
 const persistConfig = {
   key: 'root',
   storage,
-  transforms: [
-    expireReducer({
-      expireSeconds: 86400, // 24 hours
-      expiredState: {}, // Reset state after expiry
-    }),
-  ],
+  transforms: [expireAuthAndOthers],
 };
 
 // Combine reducers
 const rootReducer = combineReducers({
-  auth: persistReducer(persistConfig, authSlice),
-  agents: persistReducer(persistConfig, agentSlice),
-  packages: persistReducer(persistConfig, packageSlice),
+  auth: authSlice,
+  agents: agentSlice,
+  packages: packageSlice,
+  packageBookings: packageBookingSlice,
+  coupons: couponSlice,
+  careers: careerSlice,
 });
+
+// Persisted reducer
+const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 // Create store
 const store = configureStore({
-  reducer: rootReducer,
+  reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {

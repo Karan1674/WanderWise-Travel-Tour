@@ -1,9 +1,11 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
@@ -12,7 +14,6 @@ import clientRoutes from './routes/clientRoutes.js';
 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 8000;
@@ -27,6 +28,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
 
+console.log("STRIPE_SECRET_KEY:", process.env.STRIPE_SECRET_KEY);
 connectDB();
 
 app.use('/api/auth', authRoutes);

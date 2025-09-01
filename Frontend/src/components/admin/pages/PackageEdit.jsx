@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import '../../../styles/custom.css';
+import '../../../styles/custom.scss';
 
 const PackageEdit = () => {
   const { id } = useParams(); // Get package ID from URL
@@ -604,7 +604,8 @@ const PackageEdit = () => {
   const ensureArray = (arr) => (Array.isArray(arr) ? arr : ['']);
 
   return (
-    <div className="db-info-wrap db-add-tour-wrap p-4">
+    <div className="custom">
+      <div className="db-info-wrap db-add-tour-wrap p-4">
       <form id="edit-package-form" onSubmit={handleSubmit} encType="multipart/form-data" className="needs-validation" noValidate>
         <div className="row">
           <div className="col-lg-8 col-xl-9">
@@ -1417,6 +1418,7 @@ const PackageEdit = () => {
           </div>
         </div>
       </form>
+    </div>
     </div>
   );
 };

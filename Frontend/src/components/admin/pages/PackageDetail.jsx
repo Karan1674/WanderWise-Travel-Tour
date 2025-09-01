@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import '../../../styles/custom.css';
+
 
 const PackageDetail = () => {
   const { id } = useParams();

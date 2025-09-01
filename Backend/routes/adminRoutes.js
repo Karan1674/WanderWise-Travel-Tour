@@ -1,8 +1,8 @@
 import express from 'express';
-import { AdminDashboard, addPackage, deleteAgent, deletePackage, editAgent, editPackage, getAllAgents, getAllPackages, getPackage, getSignedInUsers, newAgent } from '../controllers/adminController.js';
+import { AdminDashboard, addPackage, deleteAgent, deletePackage, deletePackageBooking, editAgent, editPackage, editPackageBooking, getAdminAgentProfile, getAllAgents, getAllPackages, getEditPackageBooking, getPackage, getPackageBookings, getSignedInUsers, newAgent, updateAdminAgentProfile, getCoupons, createCoupon, getEditCoupon, updateCoupon, deleteCoupon, getCouponDetails, getCareerList, addCareer, getEditCareerData, editCareer, getCareerDetail, deleteCareer } from '../controllers/adminController.js';
 import { isAuthenticated } from '../middleware/isAuthenticated.js';
 import { isAdminCheck } from '../middleware/isAdminCheck.js';
-import { uploadGallery, uploadProfilePic } from '../middleware/multer.js';
+import { uploadGallery, uploadProfilePic, uploadCareerPic } from '../middleware/multer.js';
 const router = express.Router();
 
 
@@ -21,6 +21,31 @@ router.post('/update-package/:id', isAuthenticated, isAdminCheck, uploadGallery.
 router.get('/delete-package/:id', isAuthenticated, isAdminCheck, deletePackage);
 router.get('/package/:id',isAuthenticated, isAdminCheck,getPackage)
 
+
+router.get('/admin-agent-profile',isAuthenticated, isAdminCheck, getAdminAgentProfile);
+router.post('/admin-agent-profile/update',isAuthenticated,isAdminCheck, uploadProfilePic.single('profilePic'), updateAdminAgentProfile);
+
+
+router.get('/package-bookings', isAuthenticated, isAdminCheck, getPackageBookings);
+router.get('/package-booking/edit/:bookingId', isAuthenticated, isAdminCheck, getEditPackageBooking);
+router.post('/package-booking/edit/:bookingId', isAuthenticated, isAdminCheck, editPackageBooking);
+router.get('/package-booking/delete/:bookingId', isAuthenticated, isAdminCheck,deletePackageBooking);
+
+
+router.get('/coupon-list', isAuthenticated,isAdminCheck,getCoupons);
+router.post('/new-coupon', isAuthenticated,isAdminCheck, createCoupon);
+router.get('/edit-coupon/:couponId', isAuthenticated, isAdminCheck, getEditCoupon);
+router.post('/edit-coupon/:couponId',  isAuthenticated, isAdminCheck, updateCoupon);
+router.get('/delete-coupon/:couponId', isAuthenticated, isAdminCheck, deleteCoupon);
+router.get('/coupon-details/:couponId', isAuthenticated, isAdminCheck, getCouponDetails);
+
+
+router.get('/career-list', isAuthenticated, isAdminCheck, getCareerList);
+router.post('/add-career',isAuthenticated, isAdminCheck, uploadCareerPic.single('careerPic'), addCareer);
+router.get('/edit-career/:id', isAuthenticated, isAdminCheck, getEditCareerData);
+router.post('/edit-career/:id', isAuthenticated, isAdminCheck, uploadCareerPic.single('careerPic'),  editCareer);
+router.get('/career-detail/:id',  isAuthenticated, isAdminCheck, getCareerDetail);
+router.get('/delete-career/:id', isAuthenticated, isAdminCheck, deleteCareer);
 
 
 export default router;

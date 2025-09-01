@@ -1,32 +1,32 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  allAgents: [],
+  allBookings: [],
   totalPages: 1,
   currentPage: 1,
   search: '',
   statusFilter: 'all',
 };
 
-const agentSlice = createSlice({
-  name: 'agents',
+const packageBookingSlice = createSlice({
+  name: 'packageBookings',
   initialState,
   reducers: {
-    setAgentsData(state, action) {
-      state.allAgents = action.payload.allAgents || [];
+    setBookingsData(state, action) {
+      state.allBookings = action.payload.allBookings || [];
       state.totalPages = action.payload.totalPages || 1;
       state.currentPage = action.payload.currentPage || 1;
       state.search = action.payload.search || '';
       state.statusFilter = action.payload.statusFilter || 'all';
     },
-    removeAgent(state, action) {
-      state.allAgents = state.allAgents.filter(
-        (agent) => agent._id !== action.payload
+    removeBooking(state, action) {
+      state.allBookings = state.allBookings.filter(
+        (booking) => booking._id !== action.payload
       );
 
     },
-    clearAgentsData(state) {
-      state.allAgents = [];
+    clearBookingsData(state) {
+      state.allBookings = [];
       state.totalPages = 1;
       state.currentPage = 1;
       state.search = '';
@@ -35,5 +35,5 @@ const agentSlice = createSlice({
   },
 });
 
-export const { setAgentsData, removeAgent, clearAgentsData } = agentSlice.actions;
-export default agentSlice.reducer;
+export const { setBookingsData, removeBooking, clearBookingsData } = packageBookingSlice.actions;
+export default packageBookingSlice.reducer;

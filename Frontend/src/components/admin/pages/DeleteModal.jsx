@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import { useDispatch } from 'react-redux';
 
-function DeleteModal({ modalId, entityName, apiEndpoint}) {
-  const navigate = useNavigate();
+function DeleteModal({ modalId, entityName, entityId, apiEndpoint, deleteCallback }) {
+
   const [loading, setLoading] = useState(false);
+
+
+  const dispatch = useDispatch()
 
   const handleDeleteConfirm = async (e) => {
     e.preventDefault();
@@ -14,8 +17,8 @@ function DeleteModal({ modalId, entityName, apiEndpoint}) {
       const response = await axios.get(apiEndpoint, { withCredentials: true });
       const data = response.data;
       if (data.success) {
+        dispatch(deleteCallback(entityId));
         toast.success(data.message);
-        window.location.reload()
       } else {
         toast.error(data.message);
       }
@@ -24,12 +27,14 @@ function DeleteModal({ modalId, entityName, apiEndpoint}) {
       toast.error(error.response?.data?.message || `Failed to delete ${entityName}`);
     } finally {
       setLoading(false);
+      const backdrop = document.querySelector(".modal-backdrop");
+      if (backdrop) backdrop.remove();
     }
   };
 
   return (
     <div
-      className="modal fade"
+      className='modal fade'
       id={modalId}
       tabIndex="-1"
       role="dialog"

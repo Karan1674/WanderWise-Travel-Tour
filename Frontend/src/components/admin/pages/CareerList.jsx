@@ -3,14 +3,13 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import axios from 'axios';
-import DeleteModal from './DeleteModal';
+import { setCareersData, removeCareer } from '../../../redux/slices/careerSlice';
 import Pagination from './Pagination';
-import { removePackage, setPackagesData } from '../../../redux/slices/packageSlice';
+import DeleteModal from './DeleteModal';
 
-
-function PackagesList() {
-  const { userType } = useSelector((state) => state.auth);
-  const { allPackages, totalPages, currentPage, search, statusFilter } = useSelector((state) => state.packages);
+function CareerList() {
+  const { user, userType } = useSelector((state) => state.auth);
+  const { allCareers, totalPages, currentPage, search, statusFilter } = useSelector((state) => state.careers);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,32 +21,40 @@ function PackagesList() {
   const initialStatusFilter = queryParams.get('statusFilter') || 'all';
 
   useEffect(() => {
-    const fetchPackages = async () => {
+    const fetchCareers = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/db-all-packages`, {
+        setLoading(true);
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/career-list`, {
           params: { page: initialPage, search: initialSearch, statusFilter: initialStatusFilter },
           withCredentials: true,
         });
         const data = response.data;
-        console.log(data)
         if (data.success) {
-          dispatch(setPackagesData({
-            allPackages: data.allPackages,
+          dispatch(setCareersData({
+            allCareers: data.careers,
             totalPages: data.totalPages,
             currentPage: data.currentPage,
             search: data.search,
             statusFilter: data.statusFilter,
           }));
+        } else {
+          toast.error(data.message || 'Failed to fetch careers');
+          navigate('/career-list');
         }
       } catch (error) {
-        console.error('Error fetching packages:', error);
+        console.error('Error fetching careers:', error);
+        toast.error('Server error fetching careers');
+        navigate('/career-list');
       } finally {
         setLoading(false);
       }
     };
 
-    if (['admin','agent'].includes(userType)) {
-      fetchPackages();
+    if (['admin', 'agent'].includes(userType)) {
+      fetchCareers();
+    } else {
+      toast.error('Unauthorized access');
+      navigate('/');
     }
   }, [navigate, initialPage, initialSearch, initialStatusFilter, userType, dispatch]);
 
@@ -56,7 +63,7 @@ function PackagesList() {
     const newSearch = e.target.search.value.trim();
     const newStatusFilter = e.target.statusFilter.value;
     const newUrl = `?page=1${newSearch ? `&search=${encodeURIComponent(newSearch)}` : ''}${newStatusFilter !== 'all' ? `&statusFilter=${encodeURIComponent(newStatusFilter)}` : ''}`;
-    navigate(`/db-package-dashboard${newUrl}`);
+    navigate(`/career-list${newUrl}`);
   };
 
   if (loading) {
@@ -73,38 +80,29 @@ function PackagesList() {
     );
   }
 
-  if (!allPackages) {
+  if (!allCareers) {
     return null;
   }
 
   return (
-    <div className="db-info-wrap db-package-wrap">
+    <div className="db-info-wrap">
       <div className="row">
         <div className="col-lg-12">
           <div className="dashboard-box table-opp-color-box">
-            <div
-              className="header-controls"
-              style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: '10px', marginBottom: '20px' }}
-            >
-              <h4 style={{ margin: 0, color: '#333' }}>Packages List</h4>
-              {userType === 'admin' && (
-                <button
-                  className="btn btn-primary"
-                  onClick={() => navigate('/db-add-package')}
-                  aria-label="Add new package"
-                >
-                  Add Package
-                </button>
-              )}
+            <div className="header-controls" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h4 style={{ margin: 0, color: '#333' }}>Career List</h4>
+              <Link to="/add-career" className="btn btn-primary" aria-label="Add new career">
+                Add Career
+              </Link>
             </div>
-            <div className="package-controls">
+            <div className="user-controls" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <form id="search-form" onSubmit={handleSearchSubmit}>
                 <div className="form-group" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
                   <input
                     type="text"
                     name="search"
                     id="search-input"
-                    placeholder="Search by package name"
+                    placeholder="Search by career title"
                     defaultValue={search}
                     style={{ width: '70%', padding: '8px 40px 8px 8px', border: '1px solid #ddd', borderRadius: '4px', marginRight: '10px' }}
                   />
@@ -115,13 +113,12 @@ function PackagesList() {
                     style={{ width: '30%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
                   >
                     <option value="all">All</option>
-                    <option value="Pending">Pending</option>
                     <option value="Active">Active</option>
-                    <option value="Expired">Expired</option>
+                    <option value="notActive">Not Active</option>
                   </select>
                   <button
                     type="submit"
-                    aria-label="Search packages"
+                    aria-label="Search careers"
                     style={{ position: 'absolute', right: '40px', background: 'none', border: 'none', cursor: 'pointer' }}
                   >
                     <i className="fas fa-search" style={{ color: '#007bff' }}></i>
@@ -133,69 +130,66 @@ function PackagesList() {
               <table className="table table-hover">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Trip Duration</th>
-                    <th>Package Type</th>
-                    <th>Destination</th>
+                    <th>Title</th>
+                    <th>Employment Type</th>
+                    <th>Vacancies</th>
+                    <th>Salary</th>
                     <th>Created By</th>
-                    <th>Status</th>
                     <th>Updated By</th>
-                    <th>Action</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {allPackages && allPackages.length > 0 ? (
-                    allPackages.map((pkg) => (
-                      <tr key={pkg._id}>
-                        <td><span className="package-name">{pkg.title}</span></td>
-                        <td>{pkg.tripDuration ? `${pkg.tripDuration.days}D ${pkg.tripDuration.nights}N` : 'Not specified'}</td>
-                        <td>{pkg.packageType || 'Not specified'}</td>
-                        <td>{pkg.destinationCountry || 'Not specified'}</td>
-                        <td>{pkg.createdBy ? `${pkg.createdBy.firstName} ${pkg.createdBy.lastName}` : 'Unknown'}</td>
+                  {allCareers && allCareers.length > 0 ? (
+                    allCareers.map((career) => (
+                      <tr key={career._id}>
+                        <td>{career.title}</td>
+                        <td>{career.employmentType}</td>
+                        <td>{career.vacancies}</td>
+                        <td>{career.salary}</td>
+                        <td>{career.createdBy ? `${career.createdBy.firstName} ${career.createdBy.lastName}` : 'Unknown'}</td>
+                        <td>{career.updatedBy ? `${career.updatedBy.firstName} ${career.updatedBy.lastName}` : ''}</td>
                         <td>
-                          <span
-                            className={`badge badge-${
-                              pkg.status === 'Active' ? 'success' : pkg.status === 'Pending' ? 'primary' : 'danger'
-                            }`}
-                          >
-                            {pkg.status}
+                          <span className={`badge badge-${career.isActive ? 'success' : 'danger'}`}>
+                            {career.isActive ? 'Active' : 'Disabled'}
                           </span>
                         </td>
-                        <td>{pkg.updatedBy ? `${pkg.updatedBy.firstName} ${pkg.updatedBy.lastName}` : ''}</td>
                         <td>
-                          <Link
-                            to={`/package-preview/${pkg._id}`}
-                            className="badge badge-info text-white"
-                            title="Preview Package"
+                          <span
+                            className="badge badge-info text-white view-btn"
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => navigate(`/career-detail/${career._id}`)}
+                            aria-label="View Career"
                           >
                             <i className="far fa-eye"></i>
-                          </Link>
+                          </span>
+                    
                           <span
-                            className="badge badge-success"
+                            className="badge badge-success text-white edit-btn"
+                            onClick={() => navigate(`/edit-career/${career._id}`)}
                             style={{ cursor: 'pointer', marginLeft: '5px' }}
-                            onClick={() => navigate(`/edit-package/${pkg._id}`)}
-                            aria-label="Edit Package"
+                            aria-label="Edit Career"
                           >
                             <i className="far fa-edit"></i>
                           </span>
-                          {userType === 'admin' && (
-                            <span
-                              className="badge badge-danger delete-btn"
-                              style={{ cursor: 'pointer', marginLeft: '5px' }}
-                              data-toggle="modal"
-                              data-target={`#deletePackageModal_${pkg._id}`}
-                              aria-label="Delete Package"
-                            >
-                              <i className="far fa-trash-alt"></i>
-                            </span>
-                          )}
+                    
+                          <span
+                            className="badge badge-danger delete-btn"
+                            style={{ cursor: 'pointer', marginLeft: '5px' }}
+                            data-toggle="modal"
+                            data-target={`#deleteModal_${career._id}`}
+                            aria-label="Delete Career"
+                          >
+                            <i className="far fa-trash-alt"></i>
+                          </span>
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="8" className="text-center text-muted">
-                        No packages found.
+                      <td colSpan="10" className="text-center text-muted">
+                        No careers found.
                       </td>
                     </tr>
                   )}
@@ -205,17 +199,18 @@ function PackagesList() {
           </div>
         </div>
       </div>
-      {allPackages && allPackages.length > 0 &&
-        allPackages.map((pkg) => (
-          <DeleteModal
-            key={`deletePackageModal_${pkg._id}`}
-            modalId={`deletePackageModal_${pkg._id}`}
-            entityName="Package"
-            apiEndpoint={`${import.meta.env.VITE_API_URL}/api/admin/delete-package/${pkg._id}`}
-            entityId={pkg._id}
-            deleteCallback={removePackage}
-          />
-))}
+ 
+      {/* Delete modals */}
+      {allCareers && allCareers.length > 0 && allCareers.map((career) => (
+        <DeleteModal
+          key={`deleteModal_${career._id}`}
+          modalId={`deleteModal_${career._id}`}
+          entityName="Career"
+          apiEndpoint={`${import.meta.env.VITE_API_URL}/api/admin/delete-career/${career._id}`}
+          entityId={career._id}
+          deleteCallback={removeCareer}
+        />
+      ))}
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
@@ -226,4 +221,4 @@ function PackagesList() {
   );
 }
 
-export default PackagesList;
+export default CareerList;

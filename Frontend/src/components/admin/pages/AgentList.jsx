@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 import DeleteModal from './DeleteModal';
 import Pagination from './Pagination';
-import { setAgentsData } from '../../../redux/slices/agentSlice';
+import { removeAgent, setAgentsData } from '../../../redux/slices/agentSlice';
 
 
 function AgentList() {
@@ -50,7 +50,7 @@ function AgentList() {
     }
 
 
-  }, [navigate, initialPage, initialSearch, initialStatusFilter, userType, dispatch]);
+  }, [navigate, initialPage, initialSearch, initialStatusFilter, userType]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -195,9 +195,6 @@ function AgentList() {
                             style={{ cursor: 'pointer' }}
                             data-toggle="modal"
                             data-target={`#deleteModal_${agent._id}`}
-                            data-itemid={agent._id}
-                            data-apiendpoint={`${import.meta.env.VITE_API_URL}/api/auth/delete-agent/${agent._id}`}
-                            data-redirectpath={`/db-admin-created-agents?page=${currentPage}`}
                             aria-label="Delete Agent"
                           >
                             <i className="far fa-trash-alt"></i>
@@ -334,6 +331,8 @@ function AgentList() {
           modalId={`deleteModal_${agent._id}`}
           entityName="Agent"
           apiEndpoint={`${import.meta.env.VITE_API_URL}/api/admin/delete-agent/${agent._id}`}
+          entityId={agent._id}
+          deleteCallback={removeAgent}
         />
       ))}
       <Pagination

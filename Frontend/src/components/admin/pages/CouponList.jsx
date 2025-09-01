@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import axios from 'axios';
-import DeleteModal from './DeleteModal';
+import { setCouponsData, removeCoupon } from '../../../redux/slices/couponSlice';
 import Pagination from './Pagination';
-import { removePackage, setPackagesData } from '../../../redux/slices/packageSlice';
+import DeleteModal from './DeleteModal';
 
-
-function PackagesList() {
-  const { userType } = useSelector((state) => state.auth);
-  const { allPackages, totalPages, currentPage, search, statusFilter } = useSelector((state) => state.packages);
+function CouponList() {
+  const { user, userType } = useSelector((state) => state.auth);
+  const { allCoupons, totalPages, currentPage, search, statusFilter } = useSelector((state) => state.coupons);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,33 +21,42 @@ function PackagesList() {
   const initialStatusFilter = queryParams.get('statusFilter') || 'all';
 
   useEffect(() => {
-    const fetchPackages = async () => {
+    const fetchCoupons = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/db-all-packages`, {
+        setLoading(true);
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/coupon-list`, {
           params: { page: initialPage, search: initialSearch, statusFilter: initialStatusFilter },
           withCredentials: true,
         });
         const data = response.data;
-        console.log(data)
         if (data.success) {
-          dispatch(setPackagesData({
-            allPackages: data.allPackages,
+          dispatch(setCouponsData({
+            allCoupons: data.coupons,
             totalPages: data.totalPages,
             currentPage: data.currentPage,
             search: data.search,
             statusFilter: data.statusFilter,
           }));
+        } else {
+          toast.error(data.message || 'Failed to fetch coupons');
+          navigate('/coupon-list');
         }
       } catch (error) {
-        console.error('Error fetching packages:', error);
+        console.error('Error fetching coupons:', error);
+        toast.error('Server error fetching coupons');
+        navigate('/coupon-list');
       } finally {
         setLoading(false);
       }
     };
 
-    if (['admin','agent'].includes(userType)) {
-      fetchPackages();
+    if (['admin', 'agent'].includes(userType)) {
+      fetchCoupons();
+    } else {
+      toast.error('Unauthorized access');
+      navigate('/');
     }
+
   }, [navigate, initialPage, initialSearch, initialStatusFilter, userType, dispatch]);
 
   const handleSearchSubmit = (e) => {
@@ -56,7 +64,7 @@ function PackagesList() {
     const newSearch = e.target.search.value.trim();
     const newStatusFilter = e.target.statusFilter.value;
     const newUrl = `?page=1${newSearch ? `&search=${encodeURIComponent(newSearch)}` : ''}${newStatusFilter !== 'all' ? `&statusFilter=${encodeURIComponent(newStatusFilter)}` : ''}`;
-    navigate(`/db-package-dashboard${newUrl}`);
+    navigate(`/coupon-list${newUrl}`);
   };
 
   if (loading) {
@@ -73,38 +81,29 @@ function PackagesList() {
     );
   }
 
-  if (!allPackages) {
+  if (!allCoupons) {
     return null;
   }
 
   return (
-    <div className="db-info-wrap db-package-wrap">
+    <div className="db-info-wrap">
       <div className="row">
         <div className="col-lg-12">
           <div className="dashboard-box table-opp-color-box">
-            <div
-              className="header-controls"
-              style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: '10px', marginBottom: '20px' }}
-            >
-              <h4 style={{ margin: 0, color: '#333' }}>Packages List</h4>
-              {userType === 'admin' && (
-                <button
-                  className="btn btn-primary"
-                  onClick={() => navigate('/db-add-package')}
-                  aria-label="Add new package"
-                >
-                  Add Package
-                </button>
-              )}
+            <div className="header-controls" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+              <h4 style={{ margin: 0, color: '#333' }}>Coupons List</h4>
+              <Link to="/new-coupon" className="btn btn-primary" aria-label="Add new coupon">
+                Add Coupon
+              </Link>
             </div>
-            <div className="package-controls">
+            <div className="user-controls" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <form id="search-form" onSubmit={handleSearchSubmit}>
                 <div className="form-group" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
                   <input
                     type="text"
                     name="search"
                     id="search-input"
-                    placeholder="Search by package name"
+                    placeholder="Search by coupon code"
                     defaultValue={search}
                     style={{ width: '70%', padding: '8px 40px 8px 8px', border: '1px solid #ddd', borderRadius: '4px', marginRight: '10px' }}
                   />
@@ -115,13 +114,12 @@ function PackagesList() {
                     style={{ width: '30%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
                   >
                     <option value="all">All</option>
-                    <option value="Pending">Pending</option>
                     <option value="Active">Active</option>
-                    <option value="Expired">Expired</option>
+                    <option value="notActive">Not Active</option>
                   </select>
                   <button
                     type="submit"
-                    aria-label="Search packages"
+                    aria-label="Search coupons"
                     style={{ position: 'absolute', right: '40px', background: 'none', border: 'none', cursor: 'pointer' }}
                   >
                     <i className="fas fa-search" style={{ color: '#007bff' }}></i>
@@ -133,69 +131,67 @@ function PackagesList() {
               <table className="table table-hover">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Trip Duration</th>
-                    <th>Package Type</th>
-                    <th>Destination</th>
+                    <th>Code</th>
+                    <th>Discount Type</th>
+                    <th>Discount Value</th>
                     <th>Created By</th>
-                    <th>Status</th>
+                    <th>Expiry Date</th>
                     <th>Updated By</th>
-                    <th>Action</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+
                   </tr>
                 </thead>
                 <tbody>
-                  {allPackages && allPackages.length > 0 ? (
-                    allPackages.map((pkg) => (
-                      <tr key={pkg._id}>
-                        <td><span className="package-name">{pkg.title}</span></td>
-                        <td>{pkg.tripDuration ? `${pkg.tripDuration.days}D ${pkg.tripDuration.nights}N` : 'Not specified'}</td>
-                        <td>{pkg.packageType || 'Not specified'}</td>
-                        <td>{pkg.destinationCountry || 'Not specified'}</td>
-                        <td>{pkg.createdBy ? `${pkg.createdBy.firstName} ${pkg.createdBy.lastName}` : 'Unknown'}</td>
+                  {allCoupons && allCoupons.length > 0 ? (
+                    allCoupons.map((coupon) => (
+                      <tr key={coupon._id}>
+                        <td><span className="coupon-code">{coupon.code}</span></td>
+                        <td>{coupon.discountType.toUpperCase()}</td>
+                        <td>{coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `$${coupon.discountValue.toFixed(2)}`}</td>
+                        <td>{coupon.createdBy ? `${coupon.createdBy.firstName} ${coupon.createdBy.lastName}` : 'Unknown'}</td>
+                        <td>{new Date(coupon.expiryDate).toLocaleDateString()}</td>
+                        <td>{coupon.updatedBy ? `${coupon.updatedBy.firstName} ${coupon.updatedBy.lastName}` : ''}</td>
                         <td>
-                          <span
-                            className={`badge badge-${
-                              pkg.status === 'Active' ? 'success' : pkg.status === 'Pending' ? 'primary' : 'danger'
-                            }`}
-                          >
-                            {pkg.status}
+                          <span className={`badge badge-${coupon.isActive ? 'success' : 'danger'}`}>
+                            {coupon.isActive ? 'Active' : 'Inactive'}
                           </span>
                         </td>
-                        <td>{pkg.updatedBy ? `${pkg.updatedBy.firstName} ${pkg.updatedBy.lastName}` : ''}</td>
-                        <td>
-                          <Link
-                            to={`/package-preview/${pkg._id}`}
+                        <td >
+                          <span
                             className="badge badge-info text-white"
-                            title="Preview Package"
+                            title="View Coupon"
+                            onClick={() => navigate(`/coupon-details/${coupon._id}`)}
+                            style={{ cursor: 'pointer' }}
                           >
                             <i className="far fa-eye"></i>
-                          </Link>
+                          </span>
+
                           <span
-                            className="badge badge-success"
+                            className="badge badge-success text-white"
+                            onClick={() => navigate(`/edit-coupon/${coupon._id}`)}
                             style={{ cursor: 'pointer', marginLeft: '5px' }}
-                            onClick={() => navigate(`/edit-package/${pkg._id}`)}
-                            aria-label="Edit Package"
+                            aria-label="Edit Coupon"
                           >
                             <i className="far fa-edit"></i>
                           </span>
-                          {userType === 'admin' && (
-                            <span
-                              className="badge badge-danger delete-btn"
-                              style={{ cursor: 'pointer', marginLeft: '5px' }}
-                              data-toggle="modal"
-                              data-target={`#deletePackageModal_${pkg._id}`}
-                              aria-label="Delete Package"
-                            >
-                              <i className="far fa-trash-alt"></i>
-                            </span>
-                          )}
+                     
+                          <span
+                            className="badge badge-danger delete-btn"
+                            style={{ cursor: 'pointer', marginLeft: '5px' }}
+                            data-toggle="modal"
+                            data-target={`#deleteModal_${coupon._id}`}
+                            aria-label="Delete Coupon"
+                          >
+                            <i className="far fa-trash-alt"></i>
+                          </span>
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="8" className="text-center text-muted">
-                        No packages found.
+                      <td colSpan="10" className="text-center text-muted">
+                        No coupons found.
                       </td>
                     </tr>
                   )}
@@ -205,17 +201,18 @@ function PackagesList() {
           </div>
         </div>
       </div>
-      {allPackages && allPackages.length > 0 &&
-        allPackages.map((pkg) => (
-          <DeleteModal
-            key={`deletePackageModal_${pkg._id}`}
-            modalId={`deletePackageModal_${pkg._id}`}
-            entityName="Package"
-            apiEndpoint={`${import.meta.env.VITE_API_URL}/api/admin/delete-package/${pkg._id}`}
-            entityId={pkg._id}
-            deleteCallback={removePackage}
-          />
-))}
+ 
+      {/* Delete modals */}
+      {allCoupons && allCoupons.length > 0 && allCoupons.map((coupon) => (
+        <DeleteModal
+          key={`deleteModal_${coupon._id}`}
+          modalId={`deleteModal_${coupon._id}`}
+          entityName="Coupon"
+          apiEndpoint={`${import.meta.env.VITE_API_URL}/api/admin/delete-coupon/${coupon._id}`}
+          entityId={coupon._id}
+          deleteCallback={removeCoupon}
+        />
+      ))}
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
@@ -226,4 +223,4 @@ function PackagesList() {
   );
 }
 
-export default PackagesList;
+export default CouponList;

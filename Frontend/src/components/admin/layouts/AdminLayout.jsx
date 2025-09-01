@@ -7,6 +7,7 @@ import axios from 'axios';
 import { clearUser } from '../../../redux/slices/authSlice';
 import { persistor } from '../../../redux/store';
 import { clearAgentsData } from '../../../redux/slices/agentSlice';
+import { clearBookingsData } from '../../../redux/slices/packageBookingSlice';
 
 function AdminLayout() {
     const { userType, user } = useSelector((state) => state.auth);
@@ -20,8 +21,6 @@ function AdminLayout() {
             const data = response.data;
             console.log(response)
             if (data.success) {
-                dispatch(clearUser());
-                dispatch(clearAgentsData())
                 await persistor.purge();
                 toast.success(data.message);
                 navigate('/');
@@ -50,7 +49,7 @@ function AdminLayout() {
                                 <a className="dropdown-toggle" data-toggle="dropdown">
                                     <div className="dropdown-item profile-sec">
                                         {user && user.profilePic && (
-                                            <img src={user.profilePic} alt="User Profile Picture" />
+                                            <img src={`${import.meta.env.VITE_API_URL}/Uploads/profiles/${user.profilePic}`} alt="User Profile Picture" />
                                         )}
 
                                         <span>My Account </span>
@@ -79,9 +78,9 @@ function AdminLayout() {
                                     <li><Link to='/db-user-dashboard'><i className="fas fa-user"></i>Users</Link></li>
                                 )}
                                 <li><Link to='/db-package-dashboard'><i className="fas fa-hotel"></i>Packages</Link></li>
-                                <li><Link to="/product-list"><i className="fas fa-store fa-3x"></i>Shop</Link></li>
+                                {/* <li><Link to="/product-list"><i className="fas fa-store fa-3x"></i>Shop</Link></li> */}
                                 <li><Link to="/db-bookings"><i className="fas fa-shopping-cart fa-3x"></i>Bookings</Link></li>
-                                <li><Link to="/blog-list"><i className="fas fa-blog fa-3x"></i> Blog</Link></li>
+                                {/* <li><Link to="/blog-list"><i className="fas fa-blog fa-3x"></i> Blog</Link></li> */}
                                 <li><Link to="/coupon-list"><i className="fas fa-ticket-alt fa-3x"></i> Coupon</Link></li>
                                 <li><Link to="/career-list"><i className="fas fa-briefcase fa-3x"></i> Career</Link></li>
                                 <li><Link to="/application-list"><i className="fas fa-file-signature fa-3x"></i> Applicant</Link></li>
