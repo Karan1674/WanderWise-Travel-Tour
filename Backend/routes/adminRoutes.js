@@ -1,5 +1,5 @@
 import express from 'express';
-import { AdminDashboard, addPackage, deleteAgent, deletePackage, deletePackageBooking, editAgent, editPackage, editPackageBooking, getAdminAgentProfile, getAllAgents, getAllPackages, getEditPackageBooking, getPackage, getPackageBookings, getSignedInUsers, newAgent, updateAdminAgentProfile, getCoupons, createCoupon, getEditCoupon, updateCoupon, deleteCoupon, getCouponDetails, getCareerList, addCareer, getEditCareerData, editCareer, getCareerDetail, deleteCareer } from '../controllers/adminController.js';
+import { AdminDashboard, addPackage, deleteAgent, deletePackage, deletePackageBooking, editAgent, editPackage, editPackageBooking, getAdminAgentProfile, getAllAgents, getAllPackages, getEditPackageBooking, getPackage, getPackageBookings, getSignedInUsers, newAgent, updateAdminAgentProfile, getCoupons, createCoupon, getEditCoupon, updateCoupon, deleteCoupon, getCouponDetails, getCareerList, addCareer, getEditCareerData, editCareer, getCareerDetail, deleteCareer, getApplicationList, getApplicationDetail, updateApplicationStatus,  getFaqEnquiry, editFaqEnquiry, deleteFaqEnquiry, getContactEnquiries, updateContactEnquiryStatus, deleteContactEnquiry, } from '../controllers/adminController.js';
 import { isAuthenticated } from '../middleware/isAuthenticated.js';
 import { isAdminCheck } from '../middleware/isAdminCheck.js';
 import { uploadGallery, uploadProfilePic, uploadCareerPic } from '../middleware/multer.js';
@@ -46,6 +46,21 @@ router.get('/edit-career/:id', isAuthenticated, isAdminCheck, getEditCareerData)
 router.post('/edit-career/:id', isAuthenticated, isAdminCheck, uploadCareerPic.single('careerPic'),  editCareer);
 router.get('/career-detail/:id',  isAuthenticated, isAdminCheck, getCareerDetail);
 router.get('/delete-career/:id', isAuthenticated, isAdminCheck, deleteCareer);
+
+
+
+router.get('/application-list', isAuthenticated, isAdminCheck, getApplicationList);
+router.get('/application-detail/:id', isAuthenticated, isAdminCheck, getApplicationDetail);
+router.post('/application-detail/:id/update', isAuthenticated, isAdminCheck, updateApplicationStatus);
+
+
+
+router.get('/faqEnquiry', isAuthenticated, isAdminCheck, getFaqEnquiry);
+router.post('/faqEnquiry/edit/:id', isAuthenticated, isAdminCheck, editFaqEnquiry);
+router.get('/faqEnquiry/delete/:id', isAuthenticated, isAdminCheck, deleteFaqEnquiry);
+router.get('/contactEnquiry', isAuthenticated, isAdminCheck, getContactEnquiries);
+router.post('/contactEnquiry/update/:id', isAuthenticated, isAdminCheck, updateContactEnquiryStatus);
+router.get('/contactEnquiry/delete/:id', isAuthenticated, isAdminCheck, deleteContactEnquiry);
 
 
 export default router;

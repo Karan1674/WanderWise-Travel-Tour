@@ -12,6 +12,9 @@ import packageBookingSchema from '../models/packageBookingSchema.js';
 import couponSchema from '../models/couponSchema.js';
 import CareerSchema from '../models/CareerSchema.js';
 import ApplicationSchema from '../models/ApplicationSchema.js';
+import faqSchema from '../models/faqSchema.js';
+import contactSchema from '../models/contactSchema.js';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 import dotenv from "dotenv";
 dotenv.config();
@@ -19,60 +22,111 @@ const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 
 export const AdminDashboard = async (req, res) => {
-    try {
-        const userId = req.id;
-        const isAdmin = req.isAdmin;
+  try {
+    const userId = req.id;
+    const isAdmin = req.isAdmin;
 
-        if (!userId) {
-            return res.json({ message: 'Unauthorized: Please log in', type: 'error', success: false });
-        }
-
-        let userData;
-        if (isAdmin) {
-            userData = await adminModel.findById(userId).select('-password -resetPasswordToken -resetPasswordExpires');
-        } else {
-            userData = await agentModel.findById(userId).select('-password -resetPasswordToken -resetPasswordExpires');
-        }
-
-        if (!userData) {
-            return res.status(404).json({ message: 'User not found', type: 'error', success: false });
-        }
-
-        // Fetch metrics
-        const agentCount = await agentModel.countDocuments({ isActive: true });
-        const usersCount = await userModel.countDocuments();
-
-        // Since schemas are unavailable, set earnings to 0
-        const packageEarnings = 0;
-        const productEarnings = 0;
-
-        // Return empty arrays for unavailable schemas
-        const bookings = [];
-        const enquiries = [];
-        const packages = [];
-        const products = [];
-        const faqs = [];
-
-        res.json({
-            success: true,
-            message: 'Dashboard data loaded successfully',
-            type: 'success',
-            user: userData,
-            isAdmin,
-            agentCount,
-            usersCount,
-            productEarnings,
-            packageEarnings,
-            bookings,
-            enquiries,
-            packages,
-            products,
-            faqs
-        });
-    } catch (error) {
-        console.error('Error loading admin dashboard:', error);
-        res.status(500).json({ message: 'Server error loading dashboard', type: 'error', success: false });
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized: Please log in' });
     }
+
+    const userData = isAdmin
+      ? await adminModel.findById(userId).select('-password -resetPasswordToken -resetPasswordExpires').lean()
+      : await agentModel.findById(userId).select('-password -resetPasswordToken -resetPasswordExpires').lean();
+
+    if (!userData) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Fetch metrics
+    const agentCount = await agentModel.countDocuments({ isActive: true });
+    const usersCount = await userModel.countDocuments();
+    const enquiryCount = (await contactSchema.countDocuments()) + (await faqSchema.countDocuments());
+    const packageEarnings = await packageBookingSchema.aggregate([
+      { $match: { 'payment.paymentStatus': 'succeeded' } },
+      { $group: { _id: null, totalAmount: { $sum: '$total' } } },
+    ]).then(result => result[0]?.totalAmount || 0);
+
+    // Fetch recent bookings (package only)
+    const packageBookings = await packageBookingSchema
+      .find({ status: { $in: ['approved', 'pending'] } })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate({ path: 'userId', select: 'firstName lastName email' })
+      .populate({ path: 'items.packageId', select: 'title' })
+      .lean();
+
+    const bookings = packageBookings.flatMap(booking =>
+      booking.items.map(item => ({
+        user: {
+          name: `${booking.userId?.firstName || ''} ${booking.userId?.lastName || ''}`.trim() || 'Unknown User',
+          email: booking.userId?.email || 'N/A',
+        },
+        bookingDate: booking.createdAt || new Date(),
+        itemName: item.packageId?.title || 'Unknown Package',
+        type: 'Package',
+        status: booking.status || 'Unknown',
+        quantity: item.quantity || 1,
+      }))
+    ).sort((a, b) => new Date(b.bookingDate) - new Date(a.bookingDate)).slice(0, 5);
+
+    // Fetch contact enquiries
+    const enquiries = await contactSchema
+      .find()
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean();
+
+    // Fetch recent packages
+    const packages = await packageModel
+      .find({ status: 'Active' })
+      .sort({ createdAt: -1 })
+      .limit(4)
+      .select('title regularPrice discount featuredImage')
+      .lean();
+
+    const packageIds = packages.map(pkg => pkg._id);
+    const packageBookingCounts = await packageBookingSchema.aggregate([
+      { $unwind: '$items' },
+      { $match: { 'items.packageId': { $in: packageIds } } },
+      { $group: { _id: '$items.packageId', count: { $sum: '$items.quantity' } } },
+    ]);
+
+    const bookingCountMap = new Map(packageBookingCounts.map(b => [b._id.toString(), b.count]));
+    const formattedPackages = packages.map(pkg => ({
+      _id: pkg._id,
+      title: pkg.title || 'Untitled Package',
+      regularPrice: pkg.regularPrice || 0,
+      discount: pkg.discount || 0,
+      featuredImage: pkg.featuredImage || null,
+      bookingsCount: bookingCountMap.get(pkg._id.toString()) || 0,
+    }));
+
+    // Fetch recent FAQs
+    const faqs = await faqSchema
+      .find()
+      .sort({ createdAt: -1 }) 
+      .limit(4)
+      .lean();
+
+    res.json({
+      success: true,
+      message: 'Dashboard data loaded successfully',
+      user: userData,
+      isAdmin,
+      agentCount,
+      usersCount,
+      enquiryCount,
+      packageEarnings,
+      bookings,
+      enquiries,
+      packages: formattedPackages,
+      faqs,
+    });
+  } catch (error) {
+    console.error('Error loading admin dashboard:', error);
+    res.status(500).json({ success: false, message: 'Server error loading dashboard' });
+  }
 };
 
 
@@ -2181,3 +2235,458 @@ export const deleteCareer = async (req, res) => {
   }
 };
 
+
+
+// Get application list for admin/agent
+export const getApplicationList = async (req, res) => {
+    try {
+        const userId = req.id;
+        const isAdmin = req.isAdmin;
+
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'Unauthorized: Please log in' });
+        }
+
+        let userData = await adminModel.findById(userId);
+        if (!userData) {
+            userData = await agentModel.findById(userId);
+        }
+
+        if (!userData) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const { page = 1, search = '' } = req.query;
+        const limit = 3;
+        const skip = (page - 1) * limit;
+        const statusFilter = req.query.statusFilter || 'all';
+
+        // Determine which careers the user can access
+        let careerQuery = {};
+        if (isAdmin) {
+            const agents = await agentModel.find({ admin: userId }).select('_id');
+            const agentIds = agents.map(agent => agent._id);
+            careerQuery = {
+                $or: [
+                    { createdBy: userId, createdByModel: 'Admin' },
+                    { createdBy: { $in: agentIds }, createdByModel: 'Agent' }
+                ]
+            };
+        } else {
+            careerQuery = {
+                $or: [
+                    { createdBy: userId, createdByModel: 'Agent' },
+                    { createdBy: userData.admin, createdByModel: 'Admin' }
+                ]
+            };
+        }
+
+        const accessibleCareers = await CareerSchema.find(careerQuery).select('_id');
+        const careerIds = accessibleCareers.map(career => career._id);
+
+        let applicationQuery = { careerId: { $in: careerIds } };
+        if (search) {
+            applicationQuery.$or = [
+                { 'userId.firstName': { $regex: search, $options: 'i' } },
+                { 'userId.lastName': { $regex: search, $options: 'i' } },
+                { 'careerId.title': { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        if (statusFilter !== 'all') {
+            applicationQuery.status = statusFilter;
+        }
+
+        const applications = await ApplicationSchema.find(applicationQuery)
+            .populate({
+                path: 'userId',
+                select: 'firstName lastName email'
+            })
+            .populate({
+                path: 'updatedBy',
+                select: 'firstName lastName email'
+            })
+            .populate({
+                path: 'careerId',
+                select: 'title'
+            })
+            .skip(skip)
+            .limit(limit)
+            .sort({ appliedAt: -1 })
+            .lean();
+
+        const totalApplications = await ApplicationSchema.countDocuments(applicationQuery);
+        const totalPages = Math.ceil(totalApplications / limit) || 1;
+
+        res.json({
+            success: true,
+            allApplications: applications,
+            totalPages,
+            currentPage: parseInt(page),
+            search,
+            statusFilter,
+            isAdmin,
+            user: userData,
+        });
+    } catch (error) {
+        console.error('Error fetching application list:', error);
+        res.status(500).json({ success: false, message: 'Server error fetching application list' });
+    }
+};
+
+// Get application detail for admin/agent
+export const getApplicationDetail = async (req, res) => {
+    try {
+        const userId = req.id;
+        const isAdmin = req.isAdmin;
+
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'Unauthorized: Admin or Agent access required' });
+        }
+
+        let userData = await adminModel.findById(userId);
+        if (!userData) {
+            userData = await agentModel.findById(userId);
+        }
+
+        if (!userData) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const application = await ApplicationSchema.findById(req.params.id)
+            .populate({
+                path: 'userId',
+                select: 'firstName lastName email'
+            })
+            .populate({
+                path: 'updatedBy',
+                select: 'firstName lastName email'
+            })
+            .populate({
+                path: 'careerId',
+                select: 'title'
+            });
+
+        if (!application) {
+            return res.status(404).json({ success: false, message: 'Application not found' });
+        }
+
+        res.json({ success: true, application, isAdmin, user: userData });
+    } catch (error) {
+        console.error('Error fetching application detail:', error);
+        res.status(500).json({ success: false, message: 'Server error fetching application detail' });
+    }
+};
+
+// Update application status
+export const updateApplicationStatus = async (req, res) => {
+    try {
+        const userId = req.id;
+        const isAdmin = req.isAdmin;
+
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'Unauthorized: Admin or Agent access required' });
+        }
+
+        let userData = await adminModel.findById(userId);
+        if (!userData) {
+            userData = await agentModel.findById(userId);
+        }
+
+        if (!userData) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const { status } = req.body;
+        if (!['pending', 'accepted', 'rejected'].includes(status)) {
+            return res.status(400).json({ success: false, message: 'Invalid status' });
+        }
+
+        const application = await ApplicationSchema.findById(req.params.id);
+        if (!application) {
+            return res.status(404).json({ success: false, message: 'Application not found' });
+        }
+
+        application.status = status;
+        application.updatedBy = userId;
+        application.updatedByModel = isAdmin ? 'Admin' : 'Agent';
+        application.updatedAt = new Date();
+        await application.save();
+
+        res.json({ success: true, message: 'Application status updated successfully', application });
+    } catch (error) {
+        console.error('Error updating application status:', error);
+        res.status(500).json({ success: false, message: 'Server error updating application status' });
+    }
+};
+
+
+
+
+
+// Get FAQ Enquiry List
+export const getFaqEnquiry = async (req, res) => {
+  try {
+    const userId = req.id;
+    const isAdmin = req.isAdmin;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized: Please log in' });
+    }
+
+    const user = isAdmin ? await adminModel.findById(userId) : await agentModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit;
+    const search = req.query.search || '';
+    const statusFilter = req.query.statusFilter || 'all';
+
+    let query = {};
+    if (search) {
+      query.name = { $regex: search, $options: 'i' };
+    }
+    if (statusFilter === 'answered') {
+      query.answer = { $ne: null };
+    } else if (statusFilter === 'notAnswered') {
+      query.answer = null;
+    }
+
+    const questions = await faqSchema
+      .find(query)
+      .populate('answeredBy', 'firstName lastName email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const totalQuestions = await faqSchema.countDocuments(query);
+    const totalPages = Math.ceil(totalQuestions / limit) || 1;
+
+    res.json({
+      success: true,
+      allFaqEnquiries: questions,
+      totalPages,
+      currentPage: page,
+      search,
+      statusFilter,
+      user,
+      isAdmin,
+    });
+  } catch (error) {
+    console.error('Error fetching FAQ enquiry list:', error);
+    res.status(500).json({ success: false, message: 'Server error fetching FAQ enquiry list' });
+  }
+};
+
+// Edit/Answer FAQ Enquiry
+export const editFaqEnquiry = async (req, res) => {
+  try {
+    const { answer } = req.body;
+    const questionId = req.params.id;
+    const userId = req.id;
+    const isAdmin = req.isAdmin;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized: Please log in' });
+    }
+
+    const user = isAdmin ? await adminModel.findById(userId) : await agentModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    if (!answer) {
+      return res.status(400).json({ success: false, message: 'Answer is required to update the FAQ' });
+    }
+
+    const question = await faqSchema.findById(questionId);
+    if (!question) {
+      return res.status(404).json({ success: false, message: 'Question not found' });
+    }
+
+    const updateQuestion = {};
+    if (answer) {
+      updateQuestion.answer = answer;
+      updateQuestion.answeredBy = userId;
+      updateQuestion.answeredByModel = isAdmin ? 'Admin' : 'Agent';
+      updateQuestion.answeredAt = new Date();
+    } else if (question.answer && !answer) {
+      updateQuestion.answer = null;
+      updateQuestion.answeredBy = null;
+      updateQuestion.answeredByModel = null;
+      updateQuestion.answeredAt = null;
+    }
+
+    const updatedQuestion = await faqSchema
+      .findByIdAndUpdate(questionId, { $set: updateQuestion }, { new: true, runValidators: true })
+      .populate('answeredBy', 'firstName lastName email')
+      .lean();
+
+    res.json({ success: true, message: 'FAQ enquiry updated successfully', enquiry: updatedQuestion });
+  } catch (error) {
+    console.error('Error updating FAQ enquiry:', error);
+    res.status(500).json({ success: false, message: 'Server error updating FAQ enquiry' });
+  }
+};
+
+// Delete FAQ Enquiry
+export const deleteFaqEnquiry = async (req, res) => {
+  try {
+    const questionId = req.params.id;
+    const userId = req.id;
+    const isAdmin = req.isAdmin;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized: Please log in' });
+    }
+
+    const user = isAdmin ? await adminModel.findById(userId) : await agentModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const question = await faqSchema.findById(questionId);
+    if (!question) {
+      return res.status(404).json({ success: false, message: 'FAQ enquiry not found' });
+    }
+
+    await question.deleteOne();
+
+    res.json({ success: true, message: 'FAQ enquiry deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting FAQ enquiry:', error);
+    res.status(500).json({ success: false, message: 'Server error deleting FAQ enquiry' });
+  }
+};
+
+// Get Contact Enquiry List
+export const getContactEnquiries = async (req, res) => {
+  try {
+    const userId = req.id;
+    const isAdmin = req.isAdmin;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized: Please log in' });
+    }
+
+    const user = isAdmin ? await adminModel.findById(userId) : await agentModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10; // Adjusted to match FAQ limit
+    const skip = (page - 1) * limit;
+    const search = req.query.search || '';
+    const statusFilter = req.query.statusFilter || 'all';
+
+    let query = {};
+    if (search) {
+      query.name = { $regex: search, $options: 'i' };
+    }
+    if (statusFilter !== 'all') {
+      query.enquiryStatus = statusFilter;
+    }
+
+    const contacts = await contactSchema
+      .find(query)
+      .populate('updatedBy', 'firstName lastName email')
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const total = await contactSchema.countDocuments(query);
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    res.json({
+      success: true,
+      allContactEnquiries: contacts,
+      totalPages,
+      currentPage: page,
+      search,
+      statusFilter,
+      user,
+      isAdmin,
+    });
+  } catch (error) {
+    console.error('Error fetching contact enquiries:', error);
+    res.status(500).json({ success: false, message: 'Server error fetching contact enquiries' });
+  }
+};
+
+// Update Contact Enquiry Status
+export const updateContactEnquiryStatus = async (req, res) => {
+  try {
+    const { enquiryStatus } = req.body;
+    const contactId = req.params.id;
+    const userId = req.id;
+    const isAdmin = req.isAdmin;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized: Please log in' });
+    }
+
+    const user = isAdmin ? await adminModel.findById(userId) : await agentModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    if (!['pending', 'active', 'cancel'].includes(enquiryStatus)) {
+      return res.status(400).json({ success: false, message: 'Invalid status provided' });
+    }
+
+    const contact = await contactSchema.findById(contactId);
+    if (!contact) {
+      return res.status(404).json({ success: false, message: 'Contact enquiry not found' });
+    }
+
+    const updatedContact = await contactSchema
+      .findByIdAndUpdate(
+        contactId,
+        { $set: { enquiryStatus, updatedBy: userId, updatedByModel: isAdmin ? 'Admin' : 'Agent', updatedAt: new Date() } },
+        { new: true, runValidators: true }
+      )
+      .populate('updatedBy', 'firstName lastName email')
+      .lean();
+
+    res.json({ success: true, message: 'Contact enquiry status updated successfully', enquiry: updatedContact });
+  } catch (error) {
+    console.error('Error updating contact enquiry status:', error);
+    res.status(500).json({ success: false, message: 'Server error updating contact enquiry status' });
+  }
+};
+
+// Delete Contact Enquiry
+export const deleteContactEnquiry = async (req, res) => {
+  try {
+    const contactId = req.params.id;
+    const userId = req.id;
+    const isAdmin = req.isAdmin;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized: Please log in' });
+    }
+
+    const user = isAdmin ? await adminModel.findById(userId) : await agentModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const contact = await contactSchema.findById(contactId);
+    if (!contact) {
+      return res.status(404).json({ success: false, message: 'Contact enquiry not found' });
+    }
+
+    await contact.deleteOne();
+
+    res.json({ success: true, message: 'Contact enquiry deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting contact enquiry:', error);
+    res.status(500).json({ success: false, message: 'Server error deleting contact enquiry' });
+  }
+};
