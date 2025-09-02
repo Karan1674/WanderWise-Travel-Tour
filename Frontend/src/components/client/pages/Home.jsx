@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { data, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import Loader from '../layouts/Loader';
 
 function Home() {
   const { userType, user } = useSelector((state) => state.auth);
-
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [backendData, setBackendData] = useState(null);
 
@@ -34,12 +35,19 @@ function Home() {
         console.error('Error fetching home page data:', error);
         toast.error(error.response.data.message)
       }
+      finally {
+        setLoading(false);
+      }
     };
     fetchHomeData();
 
-  }, [backendData, navigate]);
+  }, [backendData, navigate,user]);
 
-
+  if (loading) {
+    return (
+    <Loader/>
+    );
+  }
 
   return (
     <>

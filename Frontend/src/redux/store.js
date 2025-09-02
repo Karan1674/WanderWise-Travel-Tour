@@ -18,6 +18,10 @@ import packageSlice from './slices/packageSlice';
 import packageBookingSlice from './slices/packageBookingSlice';
 import couponSlice from './slices/couponSlice';
 import careerSlice from './slices/careerSlice';
+import applicationSlice from './slices/applicationSlice';
+import contactEnquirySlice from './slices/contactEnquirySlice';
+import faqEnquirySlice from './slices/faqEnquirySlice';
+
 
 
 const expireAuthAndOthers = expireReducer({
@@ -43,6 +47,9 @@ const rootReducer = combineReducers({
   packageBookings: packageBookingSlice,
   coupons: couponSlice,
   careers: careerSlice,
+  applications: applicationSlice,
+  contactEnquiries: contactEnquirySlice,
+  faqEnquiries: faqEnquirySlice,
 });
 
 // Persisted reducer

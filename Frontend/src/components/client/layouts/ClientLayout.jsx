@@ -25,21 +25,7 @@ function Layout() {
           <Outlet />
         </main>
         <Footer />
-        <a id="backTotop" href="#" className="to-top-icon">
-          <i className="fas fa-chevron-up"></i>
-        </a>
-        <div className="header-search-form">
-          <div className="container">
-            <div className="header-search-container">
-              <form className="search-form" role="search" method="get">
-                <input type="text" name="s" placeholder="Enter your text..." />
-              </form>
-              <a href="#" className="search-close">
-                <i className="fas fa-times"></i>
-              </a>
-            </div>
-          </div>
-        </div>
+   
       </div>
     </div>
   );

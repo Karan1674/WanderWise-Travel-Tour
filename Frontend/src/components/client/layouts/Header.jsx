@@ -29,7 +29,7 @@ function Header() {
       toast.error(error.response?.data?.message || 'Error during logout');
     }
   };
-  
+
   return (
     <header id="masthead" className="site-header header-primary">
       <div className="top-header">
@@ -79,11 +79,7 @@ function Header() {
                   </li>
                 </ul>
               </div>
-              <div className="header-search-icon">
-                <button className="search-icon">
-                  <i className="fas fa-search"></i>
-                </button>
-              </div>
+      
             </div>
           </div>
         </div>
@@ -120,41 +116,48 @@ function Header() {
                     </li>
                   </ul>
                 </li>
+
+               
+
                 <li className="menu-item-has-children">
                   <a href="#">Discover</a>
                   <ul>
-                    <li>
-                      <NavLink to="/about">About</NavLink>
-                    </li>
-                    <li>
-                      <NavLink to="/services">Service</NavLink>
-                    </li>
+                  <li>
+                  <NavLink to="/services">Service</NavLink>
+                </li>
+
                     <li>
                       <NavLink to="/careers">Career</NavLink>
                     </li>
-                    <li>
+                    {/* <li>
                       <NavLink to="/tour-guide">Tour Guide</NavLink>
-                    </li>
-                    <li>
+                    </li> */}
+                    {/* <li>
                       <NavLink to="/gallery">Gallery</NavLink>
-                    </li>
+                    </li> */}
                     <li>
                       <NavLink to="/faq">FAQ</NavLink>
                     </li>
                     <li>
                       <NavLink to="/testimonials">Testimonial</NavLink>
                     </li>
-                    <li>
-                      <NavLink to="/contact">Contact</NavLink>
-                    </li>
+                   
                   </ul>
                 </li>
+
                 <li>
+                  <NavLink to="/about">About</NavLink>
+                </li>
+                <li>
+                      <NavLink to="/contact">Contact</NavLink>
+                    </li>
+               
+                {/* <li>
                   <NavLink to="/products">Shop</NavLink>
-                </li>
-                <li>
+                </li> */}
+                {/* <li>
                   <NavLink to="/blog">Blog</NavLink>
-                </li>
+                </li> */}
                 {user ? (
                   <li className="menu-item-has-children">
                     <a href="#">Dashboard</a>
@@ -163,10 +166,10 @@ function Header() {
                         <NavLink to="/user-profile">Profile</NavLink>
                       </li>
                       <li>
-                        <NavLink to="/user-carts">Carts</NavLink>
+                        <NavLink to="/package-cart">Cart</NavLink>
                       </li>
                       <li>
-                        <NavLink to="/userBookingPage">Bookings</NavLink>
+                        <NavLink to="/userBookingPage">Booking</NavLink>
                       </li>
                       <li>
                         <NavLink to="/applied-careers">Applied Careers</NavLink>

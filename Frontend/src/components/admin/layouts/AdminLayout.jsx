@@ -6,8 +6,7 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 import { clearUser } from '../../../redux/slices/authSlice';
 import { persistor } from '../../../redux/store';
-import { clearAgentsData } from '../../../redux/slices/agentSlice';
-import { clearBookingsData } from '../../../redux/slices/packageBookingSlice';
+
 
 function AdminLayout() {
     const { userType, user } = useSelector((state) => state.auth);
@@ -21,6 +20,7 @@ function AdminLayout() {
             const data = response.data;
             console.log(response)
             if (data.success) {
+                dispatch(clearUser());
                 await persistor.purge();
                 toast.success(data.message);
                 navigate('/');
@@ -84,8 +84,8 @@ function AdminLayout() {
                                 <li><Link to="/coupon-list"><i className="fas fa-ticket-alt fa-3x"></i> Coupon</Link></li>
                                 <li><Link to="/career-list"><i className="fas fa-briefcase fa-3x"></i> Career</Link></li>
                                 <li><Link to="/application-list"><i className="fas fa-file-signature fa-3x"></i> Applicant</Link></li>
-                                <li><Link to="/tour-guide-list"><i className="fas fa-route"></i> Tour Guide</Link></li>
-                                <li><Link to="/galleryDashboard"><i className="fas fa-images fa-3x"></i> Gallery</Link></li>
+                                {/* <li><Link to="/tour-guide-list"><i className="fas fa-route"></i> Tour Guide</Link></li> */}
+                                {/* <li><Link to="/galleryDashboard"><i className="fas fa-images fa-3x"></i> Gallery</Link></li> */}
                                 <li><Link to="/enquiryDashboard"><i className="fas fa-question-circle fa-3x"></i> Enquiry</Link></li>
                                 <li><Link to="#" onClick={handleLogout}><i className="fas fa-sign-out-alt"></i> Logout</Link></li>
                             </ul>
