@@ -33,12 +33,31 @@ export const signInUserDashboard = async (req, res) => {
         if (!userData) {
             return res.json({ message: 'User not found', type: 'error', success: false});
         }
-     
+        const packages = await packageModel.find({ status: 'Active' }).limit(3);
+        const packageIds = packages.map(pkg => pkg._id);
+        const reviews = await reviewSchema.find({ packageId: { $in: packageIds } }).sort({ date: -1 });
+        const wishlist = await wishlistSchema.findOne({ userId });
+        const wishlistPackageIds = wishlist ? wishlist.packages.map(id => id.toString()) : [];
+
+        // Attach actual reviews and wishlist status to packages
+        const packagesWithReviews = packages.map(pkg => {
+            const pkgReviews = reviews.filter(review => review.packageId.toString() === pkg._id.toString());
+            const reviewCount = pkgReviews.length;
+            const averageRating = reviewCount > 0
+                ? pkgReviews.reduce((sum, review) => sum + review.rating, 0) / reviewCount
+                : 0;
+            return {
+                ...pkg._doc,
+                reviews: pkgReviews,
+                reviewCount,
+                averageRating: averageRating.toFixed(1),
+                isWishlisted: wishlistPackageIds.includes(pkg._id.toString())
+            };
+        });
      return res.json({
-            destinations: [],
-            packages: [],
-            blogs: [],
-            testimonials: [],
+        destinations: destinations.slice(0, 4),
+        packages: packagesWithReviews,
+        testimonials,
             success:true,
         });;
     } catch (error) {
@@ -379,6 +398,8 @@ const countryToIsoCode = {
 };
 
 
+
+
 // Get Package Cart
 export const getpackageCart = async (req, res) => {
     try {
@@ -398,6 +419,100 @@ export const getpackageCart = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: 'Error retrieving cart', type: 'error' });
+    }
+};
+
+export const addToPackageCart = async (req, res) => {
+    try {
+        const { packageId, quantity } = req.body;
+        const userId = req.id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'User ID not available', type: 'error' });
+        }
+        let cart = await packageCartSchema.findOne({ userId });
+
+        if (!cart) {
+            cart = new packageCartSchema({ userId, items: [] });
+        }
+
+        const packageDetail = await packageModel.findById(packageId);
+        if (!packageDetail) {
+            return res.status(404).json({ success: false, message: 'Package not found', type: 'error' });
+        }
+
+        const existingItemIndex = cart.items.findIndex(item => item.packageId.toString() === packageId);
+        if (existingItemIndex > -1) {
+            cart.items[existingItemIndex].quantity += quantity;
+        } else {
+            cart.items.push({ packageId, quantity });
+        }
+
+        await cart.save();
+        res.json({ success: true, message: 'Package added to cart', type: 'success' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server error', type: 'error' });
+    }
+};
+
+export const updatePackageCart = async (req, res) => {
+    try {
+        const userId = req.id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'User ID not available', type: 'error' });
+        }
+
+        const cart = await packageCartSchema.findOne({ userId });
+
+        if (!cart) {
+            return res.status(404).json({ success: false, message: 'Cart not found', type: 'error' });
+        }
+
+        if (req.body.packageId && req.body.quantity) {
+            const { packageId, quantity } = req.body;
+            const itemIndex = cart.items.findIndex(item => item.packageId.toString() === packageId);
+
+            if (itemIndex > -1) {
+                if (quantity <= 0) {
+                    cart.items.splice(itemIndex, 1);
+                } else {
+                    cart.items[itemIndex].quantity = quantity;
+                }
+            } else {
+                return res.status(404).json({ success: false, message: 'Item not found in cart', type: 'error' });
+            }
+        } else {
+            return res.status(400).json({ success: false, message: 'Invalid request data', type: 'error' });
+        }
+
+        await cart.save();
+        res.json({ success: true, message: 'Cart updated', type: 'success' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server error', type: 'error' });
+    }
+};
+
+export const removeFromPackageCart = async (req, res) => {
+    try {
+        const { packageId } = req.body;
+        const userId = req.id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'User ID not available', type: 'error' });
+        }
+
+        const cart = await packageCartSchema.findOne({ userId });
+
+        if (!cart) {
+            return res.status(404).json({ success: false, message: 'Cart not found', type: 'error' });
+        }
+
+        cart.items = cart.items.filter(item => item.packageId.toString() !== packageId);
+        await cart.save();
+        res.json({ success: true, message: 'Item removed from cart', type: 'success' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server error', type: 'error' });
     }
 };
 
@@ -566,7 +681,7 @@ export const confirmPackageBooking = async (req, res) => {
         const expectedTotal = subtotal - discount + 34 + 34 + expectedTax;
 
         // Retrieve and verify payment intent
-        const paymentIntent = await stripe.paymentIntents.retrieve(client_secret.split('_secret_')[0]);
+        const paymentIntent = await stripeInstance.paymentIntents.retrieve(client_secret.split('_secret_')[0]);
         if (paymentIntent.status !== 'succeeded') {
             return res.status(400).json({ success: false, message: `Payment not completed: ${paymentIntent.status}`, type: 'error' });
         }
@@ -632,7 +747,7 @@ export const confirmPackageBooking = async (req, res) => {
         }
 
         // Fetch payment details for display
-        const paymentMethod = await stripe.paymentMethods.retrieve(paymentIntent.payment_method);
+        const paymentMethod = await stripeInstance.paymentMethods.retrieve(paymentIntent.payment_method);
         const paymentDetails = {
             cardBrand: paymentMethod.card.brand,
             last4: paymentMethod.card.last4
@@ -736,7 +851,7 @@ export const confirmSinglePackageBooking = async (req, res) => {
         const expectedTotal = subtotal - discount + 34 + 34 + expectedTax;
 
         // Retrieve and verify payment intent
-        const paymentIntent = await stripe.paymentIntents.retrieve(client_secret.split('_secret_')[0]);
+        const paymentIntent = await stripeInstance.paymentIntents.retrieve(client_secret.split('_secret_')[0]);
         if (paymentIntent.status !== 'succeeded') {
             return res.status(400).json({ success: false, message: `Payment not completed: ${paymentIntent.status}`, type: 'error' });
         }
@@ -794,7 +909,7 @@ export const confirmSinglePackageBooking = async (req, res) => {
         const bookingData = await packageBookingSchema.create(bookingDetails);
 
         // Fetch payment details for display
-        const paymentMethod = await stripe.paymentMethods.retrieve(paymentIntent.payment_method);
+        const paymentMethod = await stripeInstance.paymentMethods.retrieve(paymentIntent.payment_method);
         const paymentDetails = {
             cardBrand: paymentMethod.card.brand,
             last4: paymentMethod.card.last4
@@ -807,100 +922,6 @@ export const confirmSinglePackageBooking = async (req, res) => {
     } catch (error) {
         console.error('Confirm booking error:', error);
         res.status(500).json({ success: false, message: error.type === 'StripeInvalidRequestError' ? `Payment error: ${error.message}` : `Error confirming booking: ${error.message}`, type: 'error' });
-    }
-};
-
-export const addToPackageCart = async (req, res) => {
-    try {
-        const { packageId, quantity } = req.body;
-        const userId = req.id;
-        if (!userId) {
-            return res.status(401).json({ success: false, message: 'User ID not available', type: 'error' });
-        }
-        let cart = await packageCartSchema.findOne({ userId });
-
-        if (!cart) {
-            cart = new packageCartSchema({ userId, items: [] });
-        }
-
-        const packageDetail = await packageModel.findById(packageId);
-        if (!packageDetail) {
-            return res.status(404).json({ success: false, message: 'Package not found', type: 'error' });
-        }
-
-        const existingItemIndex = cart.items.findIndex(item => item.packageId.toString() === packageId);
-        if (existingItemIndex > -1) {
-            cart.items[existingItemIndex].quantity += quantity;
-        } else {
-            cart.items.push({ packageId, quantity });
-        }
-
-        await cart.save();
-        res.json({ success: true, message: 'Package added to cart', type: 'success' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: 'Server error', type: 'error' });
-    }
-};
-
-export const updatePackageCart = async (req, res) => {
-    try {
-        const userId = req.id;
-        if (!userId) {
-            return res.status(401).json({ success: false, message: 'User ID not available', type: 'error' });
-        }
-
-        const cart = await packageCartSchema.findOne({ userId });
-
-        if (!cart) {
-            return res.status(404).json({ success: false, message: 'Cart not found', type: 'error' });
-        }
-
-        if (req.body.packageId && req.body.quantity) {
-            const { packageId, quantity } = req.body;
-            const itemIndex = cart.items.findIndex(item => item.packageId.toString() === packageId);
-
-            if (itemIndex > -1) {
-                if (quantity <= 0) {
-                    cart.items.splice(itemIndex, 1);
-                } else {
-                    cart.items[itemIndex].quantity = quantity;
-                }
-            } else {
-                return res.status(404).json({ success: false, message: 'Item not found in cart', type: 'error' });
-            }
-        } else {
-            return res.status(400).json({ success: false, message: 'Invalid request data', type: 'error' });
-        }
-
-        await cart.save();
-        res.json({ success: true, message: 'Cart updated', type: 'success' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: 'Server error', type: 'error' });
-    }
-};
-
-export const removeFromPackageCart = async (req, res) => {
-    try {
-        const { packageId } = req.body;
-        const userId = req.id;
-        if (!userId) {
-            return res.status(401).json({ success: false, message: 'User ID not available', type: 'error' });
-        }
-
-        const cart = await packageCartSchema.findOne({ userId });
-
-        if (!cart) {
-            return res.status(404).json({ success: false, message: 'Cart not found', type: 'error' });
-        }
-
-        cart.items = cart.items.filter(item => item.packageId.toString() !== packageId);
-        await cart.save();
-        res.json({ success: true, message: 'Item removed from cart', type: 'success' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: 'Server error', type: 'error' });
     }
 };
 
@@ -975,7 +996,7 @@ export const createPackagePaymentIntent = async (req, res) => {
         const tax = (subtotal - discount) * 0.13;
         const total = subtotal - discount + 34 + 34 + tax;
 
-        const paymentIntent = await stripe.paymentIntents.create({
+        const paymentIntent = await stripeInstance.paymentIntents.create({
             amount: Math.round(total * 100),
             currency: 'usd',
             metadata: {
@@ -1054,7 +1075,7 @@ export const createSinglePackagePaymentIntent = async (req, res) => {
         const tax = (subtotal - discount) * 0.13;
         const total = subtotal - discount + 34 + 34 + tax;
 
-        const paymentIntent = await stripe.paymentIntents.create({
+        const paymentIntent = await stripeInstance.paymentIntents.create({
             amount: Math.round(total * 100),
             currency: 'usd',
             metadata: {
@@ -1075,6 +1096,8 @@ export const createSinglePackagePaymentIntent = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error', type: 'error' });
     }
 };
+
+
 
 export const getAvailableCoupons = async (req, res) => {
     try {
@@ -1165,4 +1188,505 @@ export const applyCoupon = async (req, res) => {
         console.error('Error applying coupon:', error);
         res.status(500).json({ success: false, message: 'Server error', type: 'error' });
     }
+};
+
+
+
+
+export const getPackageBookingDetails = async (req, res) => {
+    try {
+      const userId = req.id;
+      if (!userId) {
+        console.log('No user ID in request');
+        return res.status(401).json({ success: false, message: 'Unauthorized' });
+      }
+  
+      const userData = await userModel.findById(userId);
+      if (!userData) {
+        console.log('No such User Exists in the Database');
+        return res.status(404).json({ success: false, message: 'No such user exists in the database' });
+      }
+  
+      const { bookingId } = req.params;
+      const booking = await packageBookingSchema.findById(bookingId).populate('items.packageId');
+      if (!booking || booking.userId.toString() !== userId.toString()) {
+        console.log('Booking not found or not authorized:', bookingId);
+        return res.status(404).json({ success: false, message: 'Booking not found or not authorized' });
+      }
+  
+      let paymentDetails = null;
+      if (booking.payment?.stripePaymentIntentId) {
+        const paymentIntent = await stripeInstance.paymentIntents.retrieve(booking.payment.stripePaymentIntentId);
+        const paymentMethod = await stripeInstance.paymentMethods.retrieve(paymentIntent.payment_method);
+        paymentDetails = {
+          cardBrand: paymentMethod.card.brand,
+          last4: paymentMethod.card.last4,
+        };
+      }
+  
+      console.log('Fetching booking details for:', bookingId);
+      return res.json({
+        success: true,
+        booking,
+        paymentDetails,
+      });
+    } catch (error) {
+      console.error('Get booking details error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.type === 'StripeInvalidRequestError' ? `Payment error: ${error.message}` : 'Error fetching booking details',
+      });
+    }
+};
+
+
+export const getUserPackageBookings = async (req, res) => {
+  try {
+    const userId = req.id;
+    if (!userId) {
+      console.log('No user ID in request');
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const userData = await userModel.findById(userId);
+    if (!userData) {
+      console.log('No such User Exists in the Database');
+      return res.status(404).json({ success: false, message: 'No such user exists in the database' });
+    }
+
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = 3; 
+    const skip = (page - 1) * limit;
+
+
+    const search = req.query.search || '';
+    let query = { userId };
+
+    if (search) {
+      let idQuery = {};
+      if (mongoose.isValidObjectId(search)) {
+        idQuery = { _id: new mongoose.Types.ObjectId(search) };
+      }
+
+      const packageIds = await packageModel.find({
+        title: { $regex: search, $options: 'i' },
+      }).distinct('_id');
+
+      query = {
+        userId,
+        $or: [
+          idQuery,
+          { 'items.packageId': { $in: packageIds } },
+          { 'payment.paymentStatus': { $regex: search, $options: 'i' } },
+        ].filter((condition) => Object.keys(condition).length > 0),
+      };
+    }
+
+    // Fetch bookings with pagination
+    const bookings = await packageBookingSchema
+      .find(query)
+      .populate('items.packageId')
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    // Calculate total pages
+    const totalBookings = await packageBookingSchema.countDocuments(query);
+    const totalPages = Math.ceil(totalBookings / limit);
+
+    console.log(`Fetched bookings for user: ${userId}, page: ${page}, total: ${totalBookings}, search: ${search}`);
+
+    return res.json({
+      success: true,
+      bookings,
+      user: userData,
+      currentPage: page,
+      totalPages,
+      limit,
+      search,
+    });
+  } catch (error) {
+    console.error('Get user bookings error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching bookings',
+    });
+  }
+};
+
+
+// Get User Profile
+export const getUserProfile = async (req, res) => {
+  try {
+    const userId = req.id;
+    if (!userId) {
+      console.log('No user ID in request');
+      return res.status(401).json({ success: false, message: 'Unauthorized: No user ID provided' });
+    }
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      console.log('No user found for:', userId);
+      return res.status(404).json({ success: false, message: 'No user found' });
+    }
+
+    console.log('Fetched user profile for:', userId);
+    return res.json({ success: true, user });
+  } catch (error) {
+    console.error('Get user profile error:', error);
+    return res.status(500).json({ success: false, message: 'Server error while fetching profile' });
+  }
+};
+
+// Update User Profile
+export const updateUserProfile = async (req, res) => {
+  try {
+    const userId = req.id;
+    if (!userId) {
+      console.log('No user ID in request');
+      return res.status(401).json({ success: false, message: 'Unauthorized: No user ID provided' });
+    }
+
+    const { firstName, lastName, email, phone } = req.body;
+
+    // Validate required fields
+    if (!firstName || !lastName || !email || !phone) {
+      console.log('Missing required fields:', { firstName, lastName, email, phone });
+      return res.status(400).json({ success: false, message: 'First name, last name, email, and phone are required' });
+    }
+
+    let updateData = { firstName, lastName, email, phone };
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      console.log('No user found for:', userId);
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    if (req.file) {
+      // Delete existing profile picture if it exists
+      if (user.profilePic) {
+        const oldImagePath = join(__dirname, '../Uploads/profiles');
+        try {
+          await unlink(join(oldImagePath, user.profilePic));
+          console.log('Deleted old profile picture:', user.profilePic);
+        } catch (err) {
+          if (err.code !== 'ENOENT') {
+            console.error('Error deleting old profile picture:', err);
+          }
+        }
+      }
+      updateData.profilePic = req.file.filename;
+    }
+
+    const updatedUser = await userModel.findByIdAndUpdate(userId, updateData, { new: true });
+    console.log('Updated user profile:', userId);
+    return res.json({ success: true, message: 'Profile updated successfully', user: updatedUser });
+  } catch (error) {
+    console.error('Update user profile error:', error);
+    return res.status(500).json({ success: false, message: 'Server error while updating profile' });
+  }
+};
+
+// Get all active careers for Career page
+export const getCareers = async (req, res) => {
+  try {
+    const userId = req.id;
+    if (!userId) {
+      console.log('No user ID in request');
+      return res.status(401).json({ success: false, message: 'Unauthorized: Please log in' });
+    }
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      console.log('No user found for:', userId);
+      return res.status(404).json({ success: false, message: 'No such user exists in the database' });
+    }
+
+    const careers = await CareerSchema.find({ isActive: true });
+    console.log('Fetched careers for user:', userId);
+    return res.json({ success: true, careers, user });
+  } catch (error) {
+    console.error('Error fetching careers:', error);
+    return res.status(500).json({ success: false, message: 'Server error fetching careers' });
+  }
+};
+
+// Get Single Career Detail
+export const getCareerById = async (req, res) => {
+  try {
+    const userId = req.id;
+    if (!userId) {
+      console.log('No user ID in request');
+      return res.status(401).json({ success: false, message: 'Unauthorized: Please log in' });
+    }
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      console.log('No user found for:', userId);
+      return res.status(404).json({ success: false, message: 'No such user exists in the database' });
+    }
+
+    const career = await CareerSchema.findById(req.params.id).populate({
+      path: 'createdBy',
+      select: 'firstName lastName email',
+    });
+    if (!career || !career.isActive) {
+      console.log('Career not found or inactive:', req.params.id);
+      return res.status(404).json({ success: false, message: 'Career not found or inactive' });
+    }
+
+    const application = await ApplicationSchema.findOne({
+      careerId: req.params.id,
+      userId,
+    });
+
+    console.log('Fetched career:', req.params.id, 'for user:', userId);
+    return res.json({ success: true, career, application, user });
+  } catch (error) {
+    console.error('Error fetching career:', error);
+    return res.status(500).json({ success: false, message: 'Server error fetching career' });
+  }
+};
+
+// Submit application for a career
+export const applyForCareer = async (req, res) => {
+  try {
+    const userId = req.id;
+    if (!userId) {
+      console.log('No user ID in request');
+      return res.status(401).json({ success: false, message: 'Please log in to apply' });
+    }
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      console.log('No user found for:', userId);
+      return res.status(404).json({ success: false, message: 'No such user exists in the database' });
+    }
+
+    const { careerId } = req.body;
+    const id = careerId || req.params.id;
+    const career = await CareerSchema.findById(id);
+    if (!career || !career.isActive) {
+      console.log('Career not found or inactive:', id);
+      return res.status(404).json({ success: false, message: 'Career not found or inactive' });
+    }
+
+    if (!req.file) {
+      console.log('No CV file uploaded for career:', id);
+      return res.status(400).json({ success: false, message: 'CV is required' });
+    }
+
+    // Check for duplicate application
+    const existingApplication = await ApplicationSchema.findOne({ careerId: career._id, userId });
+    if (existingApplication) {
+      console.log('Duplicate application for career:', id, 'by user:', userId);
+      return res.status(400).json({ success: false, message: 'You have already applied for this career' });
+    }
+
+    // Create application
+    const application = await ApplicationSchema.create({
+      careerId: career._id,
+      userId,
+      cvFileName: req.file.filename,
+      status: 'pending',
+    });
+
+    console.log('Application submitted for career:', id, 'by user:', userId);
+    return res.json({ success: true, message: 'Application submitted successfully', application });
+  } catch (error) {
+    console.error('Error applying for career:', error);
+    return res.status(500).json({ success: false, message: 'Error submitting application' });
+  }
+};
+
+// Get All applied Jobs (Careers)
+export const getAppliedCareers = async (req, res) => {
+  try {
+    const userId = req.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = 5;
+    const search = req.query.search || '';
+
+    // Validate user
+    const user = await userModel.findById(userId);
+    if (!user) {
+      console.log('No user found for:', userId);
+      return res.status(404).json({ success: false, message: 'No such user exists in the database' });
+    }
+
+    // Fetch applications with populated career data
+    const applications = await ApplicationSchema.find({ userId })
+      .populate({
+        path: 'careerId',
+        match: {
+          title: { $regex: search, $options: 'i' },
+          isActive: true,
+        },
+        select: 'title employmentType shortDescription salary',
+      })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+
+    // Filter out applications where careerId didn't match the populate criteria
+    const filteredApplications = applications.filter((app) => app.careerId);
+
+    // Count total matching applications
+    const totalApplications = await ApplicationSchema.find({ userId })
+      .populate({
+        path: 'careerId',
+        match: {
+          title: { $regex: search, $options: 'i' },
+          isActive: true,
+        },
+        select: 'title',
+      })
+      .then((apps) => apps.filter((app) => app.careerId).length);
+
+    const totalPages = Math.ceil(totalApplications / limit);
+
+    console.log(`Fetched applications for user: ${userId}, page: ${page}, total: ${totalApplications}, search: ${search}`);
+    return res.json({
+      success: true,
+      applications: filteredApplications,
+      currentPage: page,
+      totalPages,
+      user,
+      limit,
+      search,
+    });
+  } catch (error) {
+    console.error('Error fetching applied careers:', error);
+    return res.status(500).json({ success: false, message: 'Error loading applications' });
+  }
+};
+
+
+// GET: Fetch FAQ page data
+export const getFaqPage = async (req, res) => {
+  try {
+    const userId = req.id;
+    if (!userId) {
+      console.log('No user ID in request');
+      return res.status(401).json({ success: false, message: 'Unauthorized: Please log in' });
+    }
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      console.log('No user found for:', userId);
+      return res.status(404).json({ success: false, message: 'No such user exists in the database' });
+    }
+
+    // Fetch answered questions with populated answeredBy
+    const answeredQuestions = await faqSchema
+      .find({ answer: { $ne: null } })
+      .sort({ answeredAt: -1 })
+      .lean();
+
+    console.log('Fetched FAQ page for user:', userId);
+    return res.json({ success: true, user, answeredQuestions });
+  } catch (error) {
+    console.error('Error fetching FAQ page:', error);
+    return res.status(500).json({ success: false, message: 'Error fetching FAQ page' });
+  }
+};
+
+// POST: Handle FAQ form submission
+export const submitQuestion = async (req, res) => {
+  try {
+    const { name, email, number, message } = req.body;
+    const userId = req.id;
+
+    if (!userId) {
+      console.log('No user ID in request');
+      return res.status(401).json({ success: false, message: 'Unauthorized: Please log in' });
+    }
+
+    // Basic validation
+    if (!name || !email || !message || !number) {
+      console.log('Missing required fields');
+      return res.status(400).json({ success: false, message: 'Please fill in all required fields' });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      console.log('Invalid email format:', email);
+      return res.status(400).json({ success: false, message: 'Please provide a valid email address' });
+    }
+
+    // Create new question
+    const question = await faqSchema.create({
+      name,
+      email,
+      number: number || null,
+      message,
+      questionBy: userId,
+      questionAt: Date.now(),
+    });
+
+    console.log('Question submitted by user:', userId);
+    return res.json({ success: true, message: 'Your question has been submitted successfully', question });
+  } catch (error) {
+    console.error('Error submitting question:', error);
+    return res.status(500).json({ success: false, message: 'Error submitting question' });
+  }
+};
+
+// GET: Fetch Testimonials page data
+export const testimonialPage = async (req, res) => {
+  try {
+    const userId = req.id;
+    if (!userId) {
+      console.log('No user ID in request');
+      return res.status(401).json({ success: false, message: 'Unauthorized: Please log in' });
+    }
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      console.log('No user found for:', userId);
+      return res.status(404).json({ success: false, message: 'No such user exists in the database' });
+    }
+
+    console.log('Fetched testimonials page for user:', userId);
+    return res.json({ success: true, user, testimonials });
+  } catch (error) {
+    console.error('Error fetching testimonials page:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+
+// POST: Submit Contact Enquiry
+export const createContactEnquiry = async (req, res) => {
+  try {
+    const { name, email, number, message } = req.body;
+    const userId = req.id;
+
+    if (!userId) {
+      console.log('No user ID in request');
+      return res.status(401).json({ success: false, message: 'Unauthorized: Please log in' });
+    }
+
+    if (!name || !email || !message) {
+      console.log('Missing required fields');
+      return res.status(400).json({ success: false, message: 'Name, email, and message are required' });
+    }
+
+    const contact = await contactSchema.create({
+      name,
+      email,
+      number: number || null,
+      message,
+      enquiryStatus: 'pending',
+    });
+
+    console.log('Contact enquiry submitted by user:', userId);
+    return res.json({ success: true, message: 'Contact enquiry submitted successfully', contact });
+  } catch (error) {
+    console.error('Error submitting contact enquiry:', error);
+    return res.status(500).json({ success: false, message: 'Error submitting contact enquiry' });
+  }
 };

@@ -28,7 +28,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
 
-console.log("STRIPE_SECRET_KEY:", process.env.STRIPE_SECRET_KEY);
 connectDB();
 
 app.use('/api/auth', authRoutes);

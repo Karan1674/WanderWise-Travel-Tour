@@ -4,6 +4,10 @@ import crypto from 'crypto';
 import adminModel from '../models/adminModel.js';
 import agentModel from '../models/agentModel.js';
 import userModel from '../models/userModel.js';
+import packageModel from '../models/packageModel.js';
+import reviewSchema from '../models/reviewSchema.js';
+import destinations from '../data/destinations.js';
+import testimonials from '../data/testimonials.js';
 
 export const homePage = async (req, res) => {
     try {
@@ -28,11 +32,31 @@ export const homePage = async (req, res) => {
           }
         }
 
+        const packages = await packageModel.find({ status: 'Active' }).limit(3);
+        const packageIds = packages.map(pkg => pkg._id);
+        const reviews = await reviewSchema.find({ packageId: { $in: packageIds } }).sort({ date: -1 });
+
+
+        // Attach actual reviews and wishlist status to packages
+        const packagesWithReviews = packages.map(pkg => {
+            const pkgReviews = reviews.filter(review => review.packageId.toString() === pkg._id.toString());
+            const reviewCount = pkgReviews.length;
+            const averageRating = reviewCount > 0
+                ? pkgReviews.reduce((sum, review) => sum + review.rating, 0) / reviewCount
+                : 0;
+            return {
+                ...pkg._doc,
+                reviews: pkgReviews,
+                reviewCount,
+                averageRating: averageRating.toFixed(1),
+                isWishlisted: false
+            };
+        });
+
         res.json({
-            destinations: [],
-            packages: [],
-            blogs: [],
-            testimonials: [],
+            destinations: destinations.slice(0, 4),
+            packages: packagesWithReviews,
+            testimonials,
             success:true,
             type:'info'
         });
