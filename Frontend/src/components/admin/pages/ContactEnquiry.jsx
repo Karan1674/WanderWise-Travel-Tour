@@ -184,7 +184,7 @@ function ContactEnquiry() {
                               </span>
                               <span
                                 className="badge badge-success text-white status-btn"
-                                style={{ cursor: 'pointer' }}
+                                style={{ cursor: 'pointer',marginLeft:'5px' }}
                                 data-bs-toggle="modal"
                                 data-bs-target={`#statusModal_${contact._id}`}
                                 onClick={() => setEditEnquiry(contact)}
@@ -194,7 +194,7 @@ function ContactEnquiry() {
                               </span>
                               <span
                                 className="badge badge-danger delete-btn"
-                                style={{ cursor: 'pointer' }}
+                                style={{ cursor: 'pointer',marginLeft:'5px' }}
                                 data-bs-toggle="modal"
                                 data-bs-target={`#deleteModal_${contact._id}`}
                                 aria-label="Delete Enquiry"
@@ -217,7 +217,7 @@ function ContactEnquiry() {
                                     <h5 className="modal-title" id={`viewModalLabel_${contact._id}`}>
                                       Contact Enquiry Details
                                     </h5>
-                                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"> <span aria-hidden="true">&times;</span></button>
                                   </div>
                                   <div className="modal-body">
                                     <p><strong>Name:</strong> {contact.name}</p>
@@ -250,7 +250,7 @@ function ContactEnquiry() {
                                     <h5 className="modal-title" id={`statusModalLabel_${contact._id}`}>
                                       Update Contact Enquiry Status
                                     </h5>
-                                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"> <span aria-hidden="true">&times;</span></button>
                                   </div>
                                   <form onSubmit={(e) => handleStatusUpdate(e, contact._id)}>
                                     <div className="modal-body">

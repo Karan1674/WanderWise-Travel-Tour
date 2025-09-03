@@ -143,7 +143,7 @@ function PackageOfferPage() {
                               <ins style={{ color: '#dc3545', textDecoration: 'none' }}>${pkg.salePrice}</ins>
                             </div>
                             <div className="btn-wrap" style={{ display: 'flex', gap: '10px', justifyContent: 'space-between', alignItems: 'center', marginTop: '15px' }}>
-                              <Link to={`/booking/${pkg._id}`} className=" width-6" >
+                              <Link to={`/bookPackage/${pkg._id}`} className=" width-6" >
                                 Book Now <i className="fas fa-arrow-right" style={{ marginLeft: '8px' }}></i>
                               </Link>
                               <Link

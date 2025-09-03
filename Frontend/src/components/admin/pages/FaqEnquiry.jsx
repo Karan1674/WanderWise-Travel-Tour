@@ -175,7 +175,7 @@ function FaqEnquiry() {
                               </span>
                               <span
                                 className="badge badge-success text-white edit-btn"
-                                style={{ cursor: 'pointer' }}
+                                style={{ cursor: 'pointer', marginLeft:'5px' }}
                                 data-bs-toggle="modal"
                                 data-bs-target={`#editModal_${question._id}`}
                                 onClick={() => setEditEnquiry(question)}
@@ -185,7 +185,7 @@ function FaqEnquiry() {
                               </span>
                               <span
                                 className="badge badge-danger delete-btn"
-                                style={{ cursor: 'pointer' }}
+                                style={{ cursor: 'pointer',marginLeft:'5px' }}
                                 data-bs-toggle="modal"
                                 data-bs-target={`#deleteModal_${question._id}`}
                                 aria-label="Delete Enquiry"
@@ -208,7 +208,7 @@ function FaqEnquiry() {
                                     <h5 className="modal-title" id={`viewModalLabel_${question._id}`}>
                                       FAQ Enquiry Details
                                     </h5>
-                                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"> <span aria-hidden="true">&times;</span></button>
                                   </div>
                                   <div className="modal-body">
                                     <p><strong>Name:</strong> {question.name}</p>
@@ -243,7 +243,7 @@ function FaqEnquiry() {
                                     <h5 className="modal-title" id={`editModalLabel_${question._id}`}>
                                       Answer FAQ Enquiry
                                     </h5>
-                                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"> <span aria-hidden="true">&times;</span></button>
                                   </div>
                                   <form onSubmit={(e) => handleEditSubmit(e, question._id)}>
                                     <div className="modal-body">

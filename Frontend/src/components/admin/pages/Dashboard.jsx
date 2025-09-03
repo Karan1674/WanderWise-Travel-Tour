@@ -161,7 +161,7 @@ function Dashboard() {
           </div>
 
           <div className="row">
-            <div className="col-lg-6">
+            <div className="col-lg-12">
               <div className="dashboard-box" style={{ background: '#fff', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', padding: '20px' }}>
                 <h4>Packages</h4>
                 <p>Recent travel packages</p>
@@ -207,7 +207,12 @@ function Dashboard() {
                 </div>
               </div>
             </div>
-            <div className="col-lg-6">
+         
+          </div>
+
+          <div className="row">
+
+          <div className="col-lg-6">
               <div className="dashboard-box" style={{ background: '#fff', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', padding: '20px' }}>
                 <h4>Contact Enquiries</h4>
                 <p>Latest contact enquiries</p>
@@ -253,9 +258,6 @@ function Dashboard() {
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="row">
             <div className="col-lg-6">
               <div className="dashboard-box" style={{ background: '#fff', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', padding: '20px' }}>
                 <h4>FAQs</h4>

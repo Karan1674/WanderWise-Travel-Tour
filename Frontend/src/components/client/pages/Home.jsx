@@ -1,58 +1,132 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import Loader from '../layouts/Loader';
+import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
 
 function Home() {
   const { userType, user } = useSelector((state) => state.auth);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const [backendData, setBackendData] = useState(null);
+  const [backendData, setBackendData] = useState({
+    destinations: [],
+    packages: [],
+    testimonials: [],
+  });
+
+  const sliderSettings = {
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    responsive: [
+      { breakpoint: 992, settings: { slidesToShow: 2 } },
+      { breakpoint: 768, settings: { slidesToShow: 1 } },
+    ],
+  };
+
+  const linksSetting = {
+    slidesToShow: 6,
+  };
+
+  const testimonialSettings={
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    dots:true,
+   arrows:false,
+    responsive: [
+      { breakpoint: 992, settings: { slidesToShow: 2 } },
+      { breakpoint: 768, settings: { slidesToShow: 1 } },
+    ],
+  }
 
   useEffect(() => {
-
     const fetchHomeData = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL;
-        const apiEndpoint = user ? userType === 'User' ? "/client/UserDashboard" : '/admin/AdminDashboard' : '/auth/'
-        const response = await axios.get(`${apiUrl}/api${apiEndpoint}`, { withCredentials: true });
-        const data = response.data;
 
-        if (data.success) {
-          if (userType === 'user' || userType == 'null') {
-            setBackendData(data);
-          }
-          else if(userType === 'admin' || userType==='agent') {
-            navigate('/dashboard', { replace: true });
-          }
-          else{
-            navigate('/', { replace: true });
-          }
+        if(user &&( userType === 'admin' || userType === 'agent') ){
+          navigate('/dashboard', { replace: true });
+        }
+
+        if (!user || userType !== 'User') {
+          const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/`, {
+            withCredentials: true,
+          });
+          setBackendData({  destinations: response.data.destinations || [],
+            packages: response.data.packages || [],
+            testimonials: response.data.testimonials || [],});
+            console.log(backendData)
+          setLoading(false);
+          return;
+        }
+
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/client/UserDashboard`, {
+          withCredentials: true,
+        });
+
+        if (response.data.success) {
+          setBackendData({
+            destinations: response.data.destinations || [],
+            packages: response.data.packages || [],
+            testimonials: response.data.testimonials || [],
+          });
+          console.log(backendData)
+        } else {
+          toast.error(response.data.message || 'Failed to load home page');
+          navigate('/login');
         }
       } catch (error) {
         console.error('Error fetching home page data:', error);
-        toast.error(error.response.data.message)
-      }
-      finally {
+        toast.error(error.response?.data?.message || 'Server error');
+        navigate('/login');
+      } finally {
         setLoading(false);
       }
     };
-    fetchHomeData();
 
-  }, [backendData, navigate,user]);
+    fetchHomeData();
+  }, [navigate, user, userType]);
+
+  const handleWishlistToggle = async (packageId, isWishlisted) => {
+    try {
+      const action = isWishlisted ? 'remove' : 'add';
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/client/wishlist/${action}/${packageId}`,
+        {},
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        setBackendData((prev) => ({
+          ...prev,
+          packages: prev.packages.map((pkg) =>
+            pkg._id === packageId ? { ...pkg, isWishlisted: !isWishlisted } : pkg
+          ),
+        }));
+        toast.success(`Package ${isWishlisted ? 'removed from' : 'added to'} wishlist`);
+      } else {
+        toast.error(response.data.message || `Failed to ${action} package to wishlist`);
+      }
+    } catch (error) {
+      console.error(`Error ${isWishlisted ? 'removing' : 'adding'} package to wishlist:`, error);
+      toast.error(`${user ? 'Server Error. Try Again Later':'LogIn First to Wishlist Package'}`);
+    }
+  };
 
   if (loading) {
-    return (
-    <Loader/>
-    );
+    return <Loader />;
   }
 
   return (
     <>
       <section className="home-slider-section">
-        <div className="home-slider">
+        <Slider className="home-slider" {...sliderSettings}>
           <div className="home-banner-items">
             <div className="banner-inner-wrap" style={{ backgroundImage: 'url(/assets/images/slider-banner-1.jpg)' }}></div>
             <div className="banner-content-wrap">
@@ -64,7 +138,9 @@ function Home() {
                     eaque donec delectus tempor consectetur nunc, purus congue? Rem volutpat sodales!
                     Mollit. Minus exercitationem wisi.
                   </p>
-                  <a href="#" className="button-primary">CONTINUE READING</a>
+                  <Link to="/continue-reading" className="button-primary">
+                    CONTINUE READING
+                  </Link>
                 </div>
               </div>
             </div>
@@ -81,26 +157,28 @@ function Home() {
                     eaque donec delectus tempor consectetur nunc, purus congue? Rem volutpat sodales!
                     Mollit. Minus exercitationem wisi.
                   </p>
-                  <a href="#" className="button-primary">CONTINUE READING</a>
+                  <Link to="/continue-reading" className="button-primary">
+                    CONTINUE READING
+                  </Link>
                 </div>
               </div>
             </div>
             <div className="overlay"></div>
           </div>
-        </div>
+        </Slider>
       </section>
 
       <div className="trip-search-section shape-search-section">
         <div className="slider-shape"></div>
         <div className="container">
-          <div className="trip-search-inner white-bg d-flex">
+          <form action="/tour-packages" method="GET" className="trip-search-inner white-bg d-flex">
             <div className="input-group">
               <label>Search Destination*</label>
-              <input type="text" name="s" placeholder="Enter Destination" />
+              <input type="text" name="destination" placeholder="Enter Destination" />
             </div>
             <div className="input-group">
               <label>Pax Number*</label>
-              <input type="text" name="s" placeholder="No.of People" />
+              <input type="number" name="pax" placeholder="No.of People" min="1" />
             </div>
             <div className="input-group width-col-3">
               <label>Checkin Date*</label>
@@ -108,10 +186,10 @@ function Home() {
               <input
                 className="input-date-picker"
                 type="text"
-                name="s"
+                name="checkin"
                 placeholder="MM / DD / YY"
                 autoComplete="off"
-                readOnly="readonly"
+                readOnly
               />
             </div>
             <div className="input-group width-col-3">
@@ -120,17 +198,17 @@ function Home() {
               <input
                 className="input-date-picker"
                 type="text"
-                name="s"
+                name="checkout"
                 placeholder="MM / DD / YY"
                 autoComplete="off"
-                readOnly="readonly"
+                readOnly
               />
             </div>
             <div className="input-group width-col-3">
               <label className="screen-reader-text">Search</label>
               <input type="submit" name="travel-search" value="INQUIRE NOW" />
             </div>
-          </div>
+          </form>
         </div>
       </div>
 
@@ -154,87 +232,71 @@ function Home() {
             <div className="row">
               <div className="col-lg-7">
                 <div className="row">
-                  <div className="col-sm-6">
-                    <div className="desti-item overlay-desti-item">
-                      <figure className="desti-image">
-                        <img src="/assets/images/img1.jpg" alt="" />
-                      </figure>
-                      <div className="meta-cat bg-meta-cat">
-                        <a href="#">THAILAND</a>
-                      </div>
-                      <div className="desti-content">
-                        <h3>
-                          <a href="#">Disney Land</a>
-                        </h3>
-                        <div className="rating-start" title="Rated 5 out of 4">
-                          <span style={{ width: '53%' }}></span>
+                  {backendData.destinations.slice(0, 2).map((destination, index) => (
+                    <div className="col-sm-6" key={index}>
+                      <div className="desti-item overlay-desti-item">
+                        <figure className="desti-image" >
+                          <img
+                            src={destination.image || `/assets/images/img${index + 1}.jpg`}
+                            alt={destination.name}
+                          />
+                        </figure>
+                        <div className="meta-cat bg-meta-cat">
+                          <Link to={`/tour-packages?destination=${destination.name}`}>
+                            {destination.country.toUpperCase()}
+                          </Link>
+                        </div>
+                        <div className="desti-content" style={{bottom: '30px'}}>
+                          <h3>
+                            <Link to={`/tour-packages?destination=${destination.name}`}>
+                              {destination.name}
+                            </Link>
+                          </h3>
+                          <div className="rating-start" title={`Rated 5 out of ${index === 0 ? 4 : 5}`}>
+                            <span style={{ width: `${index === 0 ? 53 : 100}%` }}></span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="col-sm-6">
-                    <div className="desti-item overlay-desti-item">
-                      <figure className="desti-image">
-                        <img src="/assets/images/img2.jpg" alt="" />
-                      </figure>
-                      <div className="meta-cat bg-meta-cat">
-                        <a href="#">NORWAY</a>
-                      </div>
-                      <div className="desti-content">
-                        <h3>
-                          <a href="#">Besseggen Ridge</a>
-                        </h3>
-                        <div className="rating-start" title="Rated 5 out of 5">
-                          <span style={{ width: '100%' }}></span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
               <div className="col-lg-5">
                 <div className="row">
-                  <div className="col-md-6 col-xl-12">
-                    <div className="desti-item overlay-desti-item">
-                      <figure className="desti-image">
-                        <img src="/assets/images/img3.jpg" alt="" />
-                      </figure>
-                      <div className="meta-cat bg-meta-cat">
-                        <a href="#">NEW ZEALAND</a>
-                      </div>
-                      <div className="desti-content">
-                        <h3>
-                          <a href="#">Oxolotan City</a>
-                        </h3>
-                        <div className="rating-start" title="Rated 5 out of 5">
-                          <span style={{ width: '100%' }}></span>
+                  {backendData.destinations.slice(2, 4).map((destination, index) => (
+                    <div className="col-md-6 col-xl-12" key={index}>
+                      <div className="desti-item overlay-desti-item">
+                        <figure className="desti-image">
+                          <img
+                            src={destination.image || `/assets/images/img${index + 3}.jpg`}
+                            alt={destination.name}
+                          />
+                        </figure>
+                        <div className="meta-cat bg-meta-cat">
+                          <Link to={`/tour-packages?destination=${destination.name}`}>
+                            {destination.name.toUpperCase()}
+                          </Link>
+                        </div>
+                        <div className="desti-content" style={{bottom: '30px'}}>
+                          <h3>
+                            <Link to={`/tour-packages?destination=${destination.name}`}>
+                              {destination.name}
+                            </Link>
+                          </h3>
+                          <div className="rating-start" title="Rated 5 out of 5">
+                            <span style={{ width: `${index === 0 ? 100 : 60}%` }}></span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="col-md-6 col-xl-12">
-                    <div className="desti-item overlay-desti-item">
-                      <figure className="desti-image">
-                        <img src="/assets/images/img4.jpg" alt="" />
-                      </figure>
-                      <div className="meta-cat bg-meta-cat">
-                        <a href="#">SINGAPORE</a>
-                      </div>
-                      <div className="desti-content">
-                        <h3>
-                          <a href="#">Marina Bay Sand City</a>
-                        </h3>
-                        <div className="rating-start" title="Rated 5 out of 4">
-                          <span style={{ width: '60%' }}></span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
             <div className="btn-wrap text-center">
-              <a href="#" className="button-primary">MORE DESTINATION</a>
+              <Link to="/destination" className="button-primary">
+                MORE DESTINATION
+              </Link>
             </div>
           </div>
         </div>
@@ -257,153 +319,71 @@ function Home() {
           </div>
           <div className="package-inner">
             <div className="row">
-              <div className="col-lg-4 col-md-6">
-                <div className="package-wrap">
-                  <figure className="feature-image">
-                    <a href="#">
-                      <img src="/assets/images/img5.jpg" alt="" />
-                    </a>
-                  </figure>
-                  <div className="package-price">
-                    <h6>
-                      <span>$1,900</span> / per person
-                    </h6>
-                  </div>
-                  <div className="package-content-wrap">
-                    <div className="package-meta text-center">
-                      <ul>
-                        <li>
-                          <i className="far fa-clock"></i>
-                          7D/6N
-                        </li>
-                        <li>
-                          <i className="fas fa-user-friends"></i>
-                          People: 5
-                        </li>
-                        <li>
-                          <i className="fas fa-map-marker-alt"></i>
-                          Malaysia
-                        </li>
-                      </ul>
+              {backendData.packages.map((pkg) => (
+                <div className="col-lg-4 col-md-6" key={pkg._id}>
+                  <div className="package-wrap">
+                    <figure className="feature-image">
+                      <Link to={`/package-detail/${pkg._id}`}>
+                        <img src={`${import.meta.env.VITE_API_URL}/Uploads/gallery/${pkg.featuredImage}`} alt={pkg.title} />
+                      </Link>
+                    </figure>
+                    <div className="package-price">
+                      <h6>
+                        <span>${pkg.regularPrice.toFixed(2)}</span> / per person
+                      </h6>
                     </div>
-                    <div className="package-content">
-                      <h3>
-                        <a href="#">Sunset view of beautiful lakeside resident</a>
-                      </h3>
-                      <div className="review-area">
-                        <span className="review-text">(25 reviews)</span>
-                        <div className="rating-start" title="Rated 5 out of 5">
-                          <span style={{ width: '60%' }}></span>
-                        </div>
+                    <div className="package-content-wrap">
+                      <div className="package-meta text-center">
+                        <ul>
+                          <li>
+                            <i className="far fa-clock"></i> {pkg.duration}
+                          </li>
+                          <li>
+                            <i className="fas fa-user-friends"></i> People: {pkg.groupSize}
+                          </li>
+                          <li>
+                            <i className="fas fa-map-marker-alt"></i> {pkg.destinationCountry}
+                          </li>
+                        </ul>
                       </div>
-                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit luctus nec ullam. Ut elit tellus, luctus nec ullam elit tellpus.</p>
-                      <div className="btn-wrap">
-                        <a href="#" className="button-text width-6">Book Now<i className="fas fa-arrow-right"></i></a>
-                        <a href="#" className="button-text width-6">Wish List<i className="far fa-heart"></i></a>
+                      <div className="package-content">
+                        <h3>
+                          <Link to={`/package-detail/${pkg._id}`}>{pkg.title}</Link>
+                        </h3>
+                        <div className="review-area">
+                          <span className="review-text">({pkg.reviewCount} reviews)</span>
+                          <div className="rating-start" title={`Rated ${pkg.averageRating} out of 5`}>
+                            <span style={{ width: `${pkg.averageRating * 20}%` }}></span>
+                          </div>
+                        </div>
+                        <p>
+                          {pkg.shortDescription ||
+                            'Lorem ipsum dolor sit amet, consectetur adipiscing elit luctus nec ullam. Ut elit tellus, luctus nec ullam elit tellpus.'}
+                        </p>
+                        <div className="btn-wrap">
+                          <Link to={`/bookPackage/${pkg._id}`} className=" width-6">
+                            Book Now<i className="fas fa-arrow-right"></i>
+                          </Link>
+                          <a
+                            className="wishlist-toggle width-6"
+                            data-package-id={pkg._id}
+                            data-is-wishlisted={pkg.isWishlisted}
+                            onClick={() => handleWishlistToggle(pkg._id, pkg.isWishlisted)}
+                          >
+                            {  pkg.isWishlisted ? 'Remove' : 'Wish List'}
+                            <i className={ pkg.isWishlisted ? 'fas fa-heart' : 'far fa-heart'}></i>
+                          </a>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className="col-lg-4 col-md-6">
-                <div className="package-wrap">
-                  <figure className="feature-image">
-                    <a href="#">
-                      <img src="/assets/images/img6.jpg" alt="" />
-                    </a>
-                  </figure>
-                  <div className="package-price">
-                    <h6>
-                      <span>$1,230</span> / per person
-                    </h6>
-                  </div>
-                  <div className="package-content-wrap">
-                    <div className="package-meta text-center">
-                      <ul>
-                        <li>
-                          <i className="far fa-clock"></i>
-                          5D/4N
-                        </li>
-                        <li>
-                          <i className="fas fa-user-friends"></i>
-                          People: 8
-                        </li>
-                        <li>
-                          <i className="fas fa-map-marker-alt"></i>
-                          Canada
-                        </li>
-                      </ul>
-                    </div>
-                    <div className="package-content">
-                      <h3>
-                        <a href="#">Experience the natural beauty of island</a>
-                      </h3>
-                      <div className="review-area">
-                        <span className="review-text">(17 reviews)</span>
-                        <div className="rating-start" title="Rated 5 out of 5">
-                          <span style={{ width: '100%' }}></span>
-                        </div>
-                      </div>
-                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit luctus nec ullam. Ut elit tellus, luctus nec ullam elit tellpus.</p>
-                      <div className="btn-wrap">
-                        <a href="#" className="button-text width-6">Book Now<i className="fas fa-arrow-right"></i></a>
-                        <a href="#" className="button-text width-6">Wish List<i className="far fa-heart"></i></a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="col-lg-4 col-md-6">
-                <div className="package-wrap">
-                  <figure className="feature-image">
-                    <a href="#">
-                      <img src="/assets/images/img7.jpg" alt="" />
-                    </a>
-                  </figure>
-                  <div className="package-price">
-                    <h6>
-                      <span>$2,000</span> / per person
-                    </h6>
-                  </div>
-                  <div className="package-content-wrap">
-                    <div className="package-meta text-center">
-                      <ul>
-                        <li>
-                          <i className="far fa-clock"></i>
-                          6D/5N
-                        </li>
-                        <li>
-                          <i className="fas fa-user-friends"></i>
-                          People: 6
-                        </li>
-                        <li>
-                          <i className="fas fa-map-marker-alt"></i>
-                          Portugal
-                        </li>
-                      </ul>
-                    </div>
-                    <div className="package-content">
-                      <h3>
-                        <a href="#">Vacation to the water city of Portugal</a>
-                      </h3>
-                      <div className="review-area">
-                        <span className="review-text">(22 reviews)</span>
-                        <div className="rating-start" title="Rated 5 out of 5">
-                          <span style={{ width: '80%' }}></span>
-                        </div>
-                      </div>
-                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit luctus nec ullam. Ut elit tellus, luctus nec ullam elit tellpus.</p>
-                      <div className="btn-wrap">
-                        <a href="#" className="button-text width-6">Book Now<i className="fas fa-arrow-right"></i></a>
-                        <a href="#" className="button-text width-6">Wish List<i className="far fa-heart"></i></a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
             <div className="btn-wrap text-center">
-              <a href="#" className="button-primary">VIEW ALL PACKAGES</a>
+              <Link to="/tour-packages" className="button-primary">
+                VIEW ALL PACKAGES
+              </Link>
             </div>
           </div>
         </div>
@@ -510,96 +490,30 @@ function Home() {
             </div>
           </div>
           <div className="activity-inner row">
-            <div className="col-lg-2 col-md-4 col-sm-6">
-              <div className="activity-item">
-                <div className="activity-icon">
-                  <a href="#">
-                    <img src="/assets/images/icon6.png" alt="" />
-                  </a>
-                </div>
-                <div className="activity-content">
-                  <h4>
-                    <a href="#">Adventure</a>
-                  </h4>
-                  <p>15 Destination</p>
-                </div>
-              </div>
-            </div>
-            <div className="col-lg-2 col-md-4 col-sm-6">
-              <div className="activity-item">
-                <div className="activity-icon">
-                  <a href="#">
-                    <img src="/assets/images/icon10.png" alt="" />
-                  </a>
-                </div>
-                <div className="activity-content">
-                  <h4>
-                    <a href="#">Trekking</a>
-                  </h4>
-                  <p>12 Destination</p>
+            {[
+              { icon: 'icon6.png', title: 'Adventure', destinations: 15 },
+              { icon: 'icon10.png', title: 'Trekking', destinations: 12 },
+              { icon: 'icon9.png', title: 'Camp Fire', destinations: 7 },
+              { icon: 'icon8.png', title: 'Off Road', destinations: 15 },
+              { icon: 'icon7.png', title: 'Camping', destinations: 13 },
+              { icon: 'icon11.png', title: 'Exploring', destinations: 25 },
+            ].map((activity, index) => (
+              <div className="col-lg-2 col-md-4 col-sm-6" key={index}>
+                <div className="activity-item">
+                  <div className="activity-icon">
+                    <a href="#">
+                      <img src={`/assets/images/${activity.icon}`} alt={activity.title} />
+                    </a>
+                  </div>
+                  <div className="activity-content">
+                    <h4>
+                      <a href="#">{activity.title}</a>
+                    </h4>
+                    <p>{activity.destinations} Destination</p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="col-lg-2 col-md-4 col-sm-6">
-              <div className="activity-item">
-                <div className="activity-icon">
-                  <a href="#">
-                    <img src="/assets/images/icon9.png" alt="" />
-                  </a>
-                </div>
-                <div className="activity-content">
-                  <h4>
-                    <a href="#">Camp Fire</a>
-                  </h4>
-                  <p>7 Destination</p>
-                </div>
-              </div>
-            </div>
-            <div className="col-lg-2 col-md-4 col-sm-6">
-              <div className="activity-item">
-                <div className="activity-icon">
-                  <a href="#">
-                    <img src="/assets/images/icon8.png" alt="" />
-                  </a>
-                </div>
-                <div className="activity-content">
-                  <h4>
-                    <a href="#">Off Road</a>
-                  </h4>
-                  <p>15 Destination</p>
-                </div>
-              </div>
-            </div>
-            <div className="col-lg-2 col-md-4 col-sm-6">
-              <div className="activity-item">
-                <div className="activity-icon">
-                  <a href="#">
-                    <img src="/assets/images/icon7.png" alt="" />
-                  </a>
-                </div>
-                <div className="activity-content">
-                  <h4>
-                    <a href="#">Camping</a>
-                  </h4>
-                  <p>13 Destination</p>
-                </div>
-              </div>
-            </div>
-            <div className="col-lg-2 col-md-4 col-sm-6">
-              <div className="activity-item">
-                <div className="activity-icon">
-                  <a href="#">
-                    <img src="/assets/images/icon11.png" alt="" />
-                  </a>
-                </div>
-                <div className="activity-content">
-                  <h4>
-                    <a href="#">Exploring</a>
-                  </h4>
-                  <p>25 Destination</p>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -621,75 +535,37 @@ function Home() {
           </div>
           <div className="special-inner">
             <div className="row">
-              <div className="col-md-6 col-lg-4">
-                <div className="special-item">
-                  <figure className="special-img">
-                    <img src="/assets/images/img9.jpg" alt="" />
-                  </figure>
-                  <div className="badge-dis">
-                    <span>
-                      <strong>20%</strong> off
-                    </span>
-                  </div>
-                  <div className="special-content">
-                    <div className="meta-cat">
-                      <a href="#">CANADA</a>
-                    </div>
-                    <h3>
-                      <a href="#">Experience the natural beauty of glacier</a>
-                    </h3>
-                    <div className="package-price">
-                      Price: <del>$1500</del> <ins>$1200</ins>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="col-md-6 col-lg-4">
-                <div className="special-item">
-                  <figure className="special-img">
-                    <img src="/assets/images/img10.jpg" alt="" />
-                  </figure>
-                  <div className="badge-dis">
-                    <span>
-                      <strong>15%</strong> off
-                    </span>
-                  </div>
-                  <div className="special-content">
-                    <div className="meta-cat">
-                      <a href="#">NEW ZEALAND</a>
-                    </div>
-                    <h3>
-                      <a href="#">Trekking to the mountain camp site</a>
-                    </h3>
-                    <div className="package-price">
-                      Price: <del>$1300</del> <ins>$1105</ins>
+              {backendData.packages
+                .filter((pkg) => pkg.discount > 0)
+                .slice(0, 3)
+                .map((pkg, index) => (
+                  <div className="col-md-6 col-lg-4" key={index}>
+                    <div className="special-item">
+                      <figure className="special-img">
+                        <img src={`${import.meta.env.VITE_API_URL}/Uploads/gallery/${pkg.featuredImage}`} alt={pkg.title} />
+                      </figure>
+                      <div className="badge-dis">
+                        <span>
+                          <strong>{pkg.discount}%</strong> off
+                        </span>
+                      </div>
+                      <div className="special-content">
+                        <div className="meta-cat">
+                          <Link to={`/tour-packages?destination=${pkg.destinationCountry}`}>
+                            {pkg.destinationCountry.toUpperCase()}
+                          </Link>
+                        </div>
+                        <h3>
+                          <Link to={`/tour-packages/${pkg._id}`}>{pkg.title}</Link>
+                        </h3>
+                        <div className="package-price">
+                          Price: <del>${pkg.regularPrice.toFixed(2)}</del>{' '}
+                          <ins>${pkg.salePrice.toFixed(2)}</ins>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-              <div className="col-md-6 col-lg-4">
-                <div className="special-item">
-                  <figure className="special-img">
-                    <img src="/assets/images/img11.jpg" alt="" />
-                  </figure>
-                  <div className="badge-dis">
-                    <span>
-                      <strong>15%</strong> off
-                    </span>
-                  </div>
-                  <div className="special-content">
-                    <div className="meta-cat">
-                      <a href="#">MALAYSIA</a>
-                    </div>
-                    <h3>
-                      <a href="#">Sunset view of beautiful lakeside city</a>
-                    </h3>
-                    <div className="package-price">
-                      Price: <del>$1800</del> <ins>$1476</ins>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                ))}
             </div>
           </div>
         </div>
@@ -739,218 +615,70 @@ function Home() {
 
       <div className="client-section">
         <div className="container">
-          <div className="client-wrap client-slider secondary-bg">
-            <div className="client-item">
-              <figure>
-                <img src="/assets/images/logo1.png" alt="" />
-              </figure>
-            </div>
-            <div className="client-item">
-              <figure>
-                <img src="/assets/images/logo2.png" alt="" />
-              </figure>
-            </div>
-            <div className="client-item">
-              <figure>
-                <img src="/assets/images/logo3.png" alt="" />
-              </figure>
-            </div>
-            <div className="client-item">
-              <figure>
-                <img src="/assets/images/logo4.png" alt="" />
-              </figure>
-            </div>
-            <div className="client-item">
-              <figure>
-                <img src="/assets/images/logo5.png" alt="" />
-              </figure>
-            </div>
-            <div className="client-item">
-              <figure>
-                <img src="/assets/images/logo2.png" alt="" />
-              </figure>
-            </div>
-          </div>
+          <Slider className="client-wrap client-slider secondary-bg" {...linksSetting}>
+            {['logo1.png', 'logo2.png', 'logo3.png', 'logo4.png', 'logo5.png', 'logo2.png'].map(
+              (logo, index) => (
+                <div className="client-item" key={index}>
+                  <figure>
+                    <img src={`/assets/images/${logo}`} alt="" />
+                  </figure>
+                </div>
+              )
+            )}
+          </Slider>
         </div>
       </div>
 
-      <section className="subscribe-section" style={{ backgroundImage: 'url(/assets/images/img16.jpg)' }}>
-        <div className="container">
-          <div className="row">
-            <div className="col-lg-7">
-              <div className="section-heading section-heading-white">
-                <h5 className="dash-style">HOLIDAY PACKAGE OFFER</h5>
-                <h2>HOLIDAY SPECIAL 25% OFF !</h2>
-                <h4>
-                  Sign up now to recieve hot special offers and information about the best tour
-                  packages, updates and discounts !!
-                </h4>
-                <div className="newsletter-form">
-                  <form>
-                    <input type="email" name="s" placeholder="Your Email Address" />
-                    <input type="submit" name="signup" value="SIGN UP NOW!" />
-                  </form>
-                </div>
-                <p>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec
-                  ullamcorper mattis, pulvinar dapibus leo. Eaque adipiscing, luctus eleifend
-                  temporibus occaecat luctus eleifend tempo ribus.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="blog-section">
-        <div className="container">
-          <div className="section-heading text-center">
+      {!user && (
+        <section className="subscribe-section" style={{ backgroundImage: 'url(/assets/images/img16.jpg)' }}>
+          <div className="container">
             <div className="row">
-              <div className="col-lg-8 offset-lg-2">
-                <h5 className="dash-style">FROM OUR BLOG</h5>
-                <h2>OUR RECENT POSTS</h2>
-                <p>
-                  Mollit voluptatem perspiciatis convallis elementum corporis quo veritatis aliquid
-                  blandit, blandit torquent, odit placeat. Adipiscing repudiandae eius cursus? Nostrum
-                  magnis maxime curae placeat.
-                </p>
+              <div className="col-lg-7">
+                <div className="section-heading section-heading-white">
+                  <h5 className="dash-style">HOLIDAY PACKAGE OFFER</h5>
+                  <h2>HOLIDAY SPECIAL 25% OFF !</h2>
+                  <h4>
+                    Sign up now to receive hot special offers and information about the best tour
+                    packages, updates and discounts !!
+                  </h4>
+                  <div className="newsletter-form">
+                    <form action="/signupUser" method="GET">
+                      <input type="email" name="email" placeholder="Your Email Address" required />
+                      <input type="submit" name="signup" value="SIGN UP NOW!" />
+                    </form>
+                  </div>
+                  <p>
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec
+                    ullamcorper mattis, pulvinar dapibus leo. Eaque adipiscing, luctus eleifend
+                    temporibus occaecat luctus eleifend tempo ribus.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-          <div className="row">
-            <div className="col-md-6 col-lg-4">
-              <article className="post">
-                <figure className="feature-image">
-                  <a href="#">
-                    <img src="/assets/images/img17.jpg" alt="" />
-                  </a>
-                </figure>
-                <div className="entry-content">
-                  <h3>
-                    <a href="#">Life is a beautiful journey not a destination</a>
-                  </h3>
-                  <div className="entry-meta">
-                    <span className="byline">
-                      <a href="#">Demoteam</a>
-                    </span>
-                    <span className="posted-on">
-                      <a href="#">August 17, 2021</a>
-                    </span>
-                    <span className="comments-link">
-                      <a href="#">No Comments</a>
-                    </span>
-                  </div>
-                </div>
-              </article>
-            </div>
-            <div className="col-md-6 col-lg-4">
-              <article className="post">
-                <figure className="feature-image">
-                  <a href="#">
-                    <img src="/assets/images/img18.jpg" alt="" />
-                  </a>
-                </figure>
-                <div className="entry-content">
-                  <h3>
-                    <a href="#">Take only memories, leave only footprints</a>
-                  </h3>
-                  <div className="entry-meta">
-                    <span className="byline">
-                      <a href="#">Demoteam</a>
-                    </span>
-                    <span className="posted-on">
-                      <a href="#">August 17, 2021</a>
-                    </span>
-                    <span className="comments-link">
-                      <a href="#">No Comments</a>
-                    </span>
-                  </div>
-                </div>
-              </article>
-            </div>
-            <div className="col-md-6 col-lg-4">
-              <article className="post">
-                <figure className="feature-image">
-                  <a href="#">
-                    <img src="/assets/images/img19.jpg" alt="" />
-                  </a>
-                </figure>
-                <div className="entry-content">
-                  <h3>
-                    <a href="#">Journeys are best measured in new friends</a>
-                  </h3>
-                  <div className="entry-meta">
-                    <span className="byline">
-                      <a href="#">Demoteam</a>
-                    </span>
-                    <span className="posted-on">
-                      <a href="#">August 17, 2021</a>
-                    </span>
-                    <span className="comments-link">
-                      <a href="#">No Comments</a>
-                    </span>
-                  </div>
-                </div>
-              </article>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      <div className="testimonial-section" style={{ backgroundImage: 'url(/assets/images/img23.jpg)' }}>
+      <div className="testimonial-section " style={{marginTop:'8rem',  backgroundImage: 'url(/assets/images/img23.jpg)' }}>
         <div className="container">
           <div className="row">
             <div className="col-lg-10 offset-lg-1">
-              <div className="testimonial-inner testimonial-slider">
-                <div className="testimonial-item text-center">
-                  <figure className="testimonial-img">
-                    <img src="/assets/images/img20.jpg" alt="" />
-                  </figure>
-                  <div className="testimonial-content">
-                    <p>
-                      " Dolorum aenean dolorem minima! Voluptatum? Corporis condimentum ac primis fusce, atque!
-                      Vivamus. Non cupiditate natus excepturi, quod quo, aute facere? Deserunt aliquip, egestas
-                      ipsum, eu.Dolorum aenean dolorem minima!? Corporis condi mentum acpri! "
-                    </p>
-                    <cite>
-                      Johny English
-                      <span className="company">Travel Agent</span>
-                    </cite>
+              <Slider className="testimonial-inner testimonial-slider" {...testimonialSettings}>
+                {backendData.testimonials.map((testimonial, index) => (
+                  <div className="testimonial-item text-center" key={index}>
+                    <figure className="testimonial-img">
+                      <img src={testimonial.image} alt={testimonial.name} />
+                    </figure>
+                    <div className="testimonial-content">
+                      <p>{testimonial.content}</p>
+                      <cite>
+                        {testimonial.name}
+                        <span className="company">{testimonial.role}</span>
+                      </cite>
+                    </div>
                   </div>
-                </div>
-                <div className="testimonial-item text-center">
-                  <figure className="testimonial-img">
-                    <img src="/assets/images/img21.jpg" alt="" />
-                  </figure>
-                  <div className="testimonial-content">
-                    <p>
-                      " Dolorum aenean dolorem minima! Voluptatum? Corporis condimentum ac primis fusce, atque!
-                      Vivamus. Non cupiditate natus excepturi, quod quo, aute facere? Deserunt aliquip, egestas
-                      ipsum, eu.Dolorum aenean dolorem minima!? Corporis condi mentum acpri! "
-                    </p>
-                    <cite>
-                      William Housten
-                      <span className="company">Travel Agent</span>
-                    </cite>
-                  </div>
-                </div>
-                <div className="testimonial-item text-center">
-                  <figure className="testimonial-img">
-                    <img src="/assets/images/img22.jpg" alt="" />
-                  </figure>
-                  <div className="testimonial-content">
-                    <p>
-                      " Dolorum aenean dolorem minima! Voluptatum? Corporis condimentum ac primis fusce, atque!
-                      Vivamus. Non cupiditate natus excepturi, quod quo, aute facere? Deserunt aliquip, egestas
-                      ipsum, eu.Dolorum aenean dolorem minima!? Corporis condi mentum acpri! "
-                    </p>
-                    <cite>
-                      Alison Wright
-                      <span className="company">Travel Guide</span>
-                    </cite>
-                  </div>
-                </div>
-              </div>
+                ))}
+              </Slider>
             </div>
           </div>
         </div>
@@ -1017,7 +745,9 @@ function Home() {
               </div>
               <div className="contact-btn-wrap">
                 <h3>LET'S JOIN US FOR MORE UPDATE !!</h3>
-                <a href="#" className="button-primary">LEARN MORE</a>
+                <Link to="/careers" className="button-primary">
+                  LEARN MORE
+                </Link>
               </div>
             </div>
           </div>

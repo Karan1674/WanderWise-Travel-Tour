@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
@@ -8,27 +7,24 @@ import { toast } from 'react-toastify';
 const PackageDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { allPackages } = useSelector((state) => state.packages);
+  
   const [packageData, setPackageData] = useState(null);
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings] = useState(null);
 
   useEffect(() => {
     const fetchPackage = async () => {
       try {
-        const pkg = allPackages.find((p) => p._id === id);
-        if (pkg) {
-          setPackageData(pkg);
-          console.log('Loaded package from Redux:', pkg);
-        } else {
+
           const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/package/${id}`, { withCredentials: true });
           if (response.data.success) {
             setPackageData(response.data.package);
+            setBookings(response.data.bookings);
             console.log('Loaded package from API:', response.data.package);
           } else {
             toast.error('Failed to load package data');
             navigate('/db-package-dashboard');
           }
-        }
+  
       } catch (err) {
         console.error('Error fetching package:', err);
         toast.error('Error loading package data');
@@ -36,22 +32,11 @@ const PackageDetail = () => {
       }
     };
 
-    const fetchBookings = async () => {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/package-bookings/${id}`, { withCredentials: true });
-        if (response.data.success) {
-          setBookings(response.data.bookings);
-          console.log('Loaded bookings:', response.data.bookings);
-        }
-      } catch (err) {
-        console.error('Error fetching bookings:', err);
-        toast.error('Error loading booking data');
-      }
-    };
+  
 
     fetchPackage();
-    fetchBookings();
-  }, [id, allPackages, navigate]);
+
+  }, [id, navigate]);
 
   if (!packageData) {
     return (
@@ -733,7 +718,7 @@ const PackageDetail = () => {
                               <span
                                 className="badge badge-info"
                                 style={{ fontSize: '15px', cursor: 'pointer' }}
-                                onClick={() => navigate(`/user-booking/${booking._id}`)}
+                                onClick={() => navigate(`/package-booking/edit/${booking._id}`)}
                               >
                                 <i className="far fa-edit"></i>
                               </span>

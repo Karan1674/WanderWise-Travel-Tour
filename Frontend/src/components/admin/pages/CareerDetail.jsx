@@ -175,7 +175,7 @@ function CareerDetail() {
                           </td>
                           <td>{new Date(application.appliedAt).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                           <td>
-                            <Link to={`/application-detail?applicationId=${application._id}`} className="btn btn-sm text-white btn-info">
+                            <Link to={`/application-detail/${application._id}`} className="btn btn-sm text-white btn-info">
                               View & Edit
                             </Link>
                           </td>

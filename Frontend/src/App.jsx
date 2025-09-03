@@ -46,6 +46,18 @@ import WishlistPage from './components/client/pages/WishlistPage.jsx';
 import PackageOfferPage from './components/client/pages/PackageOfferPage';
 import PackageCartPage from './components/client/pages/PackageCartPage';
 import BookingPage from './components/client/pages/BookingPage';
+import BookingConfirmation from './components/client/pages/BookingConfirmation';
+import UserPackageBookings from './components/client/pages/UserPackageBookings';
+import UserProfile from './components/client/pages/UserProfile';
+import Services from './components/client/pages/Services';
+import About from './components/client/pages/About';
+import Careers from './components/client/pages/Careers';
+import CareerDetailSingle from './components/client/pages/CareerDetailSIngle';
+import AppliedCareers from './components/client/pages/AppliedCareers';
+import ContinueReading from './components/client/pages/ContinueReading';
+import Faq from './components/client/pages/Faq';
+import Testimonials from './components/client/pages/Testimonials';
+import Contact from './components/client/pages/Contact';
 
 
 function App() {
@@ -63,8 +75,19 @@ function App() {
             <Route path="/wishlist" element={<WishlistPage />} />
             <Route path="/package-cart" element={<PackageCartPage/>} />
             <Route path="/packageCart/checkout" element={<BookingPage/>} />
-            <Route path="/bookPackage/:id" element={<BookingPage/>} />
-  
+            <Route path="/bookPackage/:packageId" element={<BookingPage/>} />
+            <Route path="/confirmation/:bookingId" element={<BookingConfirmation/> } />
+            <Route path="/userBookingPage" element={<UserPackageBookings/> } />
+            <Route path="/user-profile" element={<UserProfile/> } />
+            <Route path="/about" element={<About/> } />
+            <Route path="/services" element={<Services/> } />
+            <Route path="/careers" element={<Careers/> } />
+            <Route path="/careers/:id" element={<CareerDetailSingle/> } />
+            <Route path="/applied-careers" element={<AppliedCareers/> } />
+            <Route path="/continueReading" element={<ContinueReading/> } />
+            <Route path="/faq" element={<Faq/> } />
+            <Route path="/testimonials" element={<Testimonials/> } />
+            <Route path="/contact" element={<Contact/> } />
         </Route>
 
 
@@ -81,7 +104,7 @@ function App() {
           <Route path="/package-preview/:id" element={<PackageDetail />} />
           <Route path="/admin-agent-profile" element={<AdminAgentProfile />} />
           <Route path="/db-bookings" element={<PackageBookingList />} />
-          <Route path="/package-booking/edit/:id" element={<PackageBookingEdit />} />
+          <Route path="/package-booking/edit/:bookingId" element={<PackageBookingEdit />} />
           <Route path="/coupon-list" element={<CouponList />} />
           <Route path="/new-coupon" element={<CouponAdd />} />
           <Route path="/coupon-details/:couponId" element={<CouponDetails />} />

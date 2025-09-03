@@ -174,7 +174,7 @@ function PackageBookingList() {
                         <td>
                           <Link
                             to={`/package-booking/edit/${booking._id}`}
-                            className="badge badge-success text-white"
+                            className="badge badge-success text-white mr-1"
                             title="Edit Booking"
                           >
                             <i className="far fa-edit"></i>

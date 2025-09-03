@@ -10,85 +10,101 @@ import Loader from '../layouts/Loader';
 function CouponPopup({ coupons, onApply, onClose }) {
   return (
     <>
-      <div id="popup-overlay" style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        background: 'rgba(0, 0, 0, 0.5)',
-        zIndex: 999,
-        opacity: 1,
-        pointerEvents: 'auto',
-      }} onClick={onClose}></div>
-      <div id="available-coupons-popup" style={{
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        background: '#ffffff',
-        padding: '20px',
-        borderRadius: '12px',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
-        zIndex: 1000,
-        maxWidth: '500px',
-        maxHeight: '70vh',
-        overflowY: 'auto',
-        opacity: 1,
-        width: '90%',
-      }}>
-        <i className="fas fa-times close-icon" style={{
-          position: 'absolute',
-          top: '15px',
-          right: '15px',
-          fontSize: '20px',
-          color: '#6c757d',
-          cursor: 'pointer',
-        }} onClick={onClose}></i>
+      <div
+        id="popup-overlay"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'rgba(0, 0, 0, 0.5)',
+          zIndex: 999,
+          opacity: 1,
+          pointerEvents: 'auto',
+        }}
+        onClick={onClose}
+      ></div>
+      <div
+        id="available-coupons-popup"
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: '#ffffff',
+          padding: '20px',
+          borderRadius: '12px',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+          zIndex: 1000,
+          maxWidth: '500px',
+          maxHeight: '70vh',
+          overflowY: 'auto',
+          opacity: 1,
+          width: '90%',
+        }}
+      >
+        <i
+          className="fas fa-times close-icon"
+          style={{
+            position: 'absolute',
+            top: '15px',
+            right: '15px',
+            fontSize: '20px',
+            color: '#6c757d',
+            cursor: 'pointer',
+          }}
+          onClick={onClose}
+        ></i>
         <h5 style={{ marginBottom: '20px', color: '#333', fontSize: '18px', fontWeight: 'bold', textAlign: 'center' }}>
           Available Coupons
         </h5>
         {coupons.length > 0 ? (
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {coupons.map((coupon) => (
-              <li key={coupon._id} style={{
-                marginBottom: '15px',
-                padding: '15px',
-                border: '1px solid #eee',
-                borderRadius: '8px',
-                background: '#f9f9f9',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}>
+              <li
+                key={coupon._id}
+                style={{
+                  marginBottom: '15px',
+                  padding: '15px',
+                  border: '1px solid #eee',
+                  borderRadius: '8px',
+                  background: '#f9f9f9',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
                 <div className="coupon-details" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                   <div className="coupon-code" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <i className="fas fa-gift text-secondary" style={{ color: '#6c757d' }}></i>
                     <span style={{ fontWeight: 'bold', color: '#333' }}>{coupon.code}</span>
                   </div>
                   <span className="coupon-save" style={{ fontSize: '13px', color: '#6c757d' }}>
-                    Save {coupon.discountType === 'fixed' ? '$' : ''}{coupon.discountValue}{coupon.discountType === 'percentage' ? '%' : ''}
+                    Save {coupon.discountType === 'fixed' ? '$' : ''}{coupon.discountValue}
+                    {coupon.discountType === 'percentage' ? '%' : ''}
                   </span>
                 </div>
-                <button className="apply" style={{
-                  padding: '8px 15px',
-                  background: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                }} onClick={() => onApply(coupon.code)}
->
+                <button
+                  className="apply"
+                  style={{
+                    padding: '8px 15px',
+                    background: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                  }}
+                  onClick={() => onApply(coupon.code)}
+                >
                   Apply
                 </button>
               </li>
             ))}
           </ul>
         ) : (
-          <p style={{ textAlign: 'center', color: '#6c757d', fontSize: '14px' }}>
-            No coupons available.
-          </p>
+          <p style={{ textAlign: 'center', color: '#6c757d', fontSize: '14px' }}>No coupons available.</p>
         )}
       </div>
     </>
@@ -118,9 +134,6 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
   const [clientSecret, setClientSecret] = useState('');
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
-  const [couponStatus, setCouponStatus] = useState('');
-  const [couponError, setCouponError] = useState('');
-  const [cardError, setCardError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [coupons, setCoupons] = useState([]);
   const [showCoupons, setShowCoupons] = useState(false);
@@ -131,8 +144,6 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
     }), {})
   );
   const formRef = useRef(null);
-
-
 
   const calculateTotals = () => {
     const subtotal = cart.items.reduce(
@@ -179,11 +190,9 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
         toast.error(response.data.message || 'Failed to update quantity');
       }
     } catch (error) {
-      console.error('Error updating quantity:', error);
       toast.error('Error updating quantity');
     }
   };
-
   const applyCoupon = async (code) => {
     try {
       const response = await axios.post(
@@ -193,53 +202,44 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
       );
       if (response.data.success) {
         if (subtotal >= response.data.coupon.minPurchase) {
-           setAppliedCoupon(response.data.coupon);
+          // Calculate discount using the coupon data from the response
+          const discount =
+            response.data.coupon.discountType === 'percentage'
+              ? Math.min(subtotal * (response.data.coupon.discountValue / 100), response.data.coupon.maxDiscount || Infinity)
+              : response.data.coupon.discountValue;
+          
+          // Update state
           setCouponCode(code);
-         console.log(response)
-          setCouponStatus(`Coupon applied! Discount: $${calculateTotals().discount.toFixed(2)}`);
-          setCouponError('');
-          toast.success('Coupon applied successfully');
+          setAppliedCoupon(response.data.coupon);
+  
+          // Show toast with the calculated discount
+          toast.success(`Coupon applied! Discount: $${discount.toFixed(2)}`);
         } else {
-          setCouponError('Minimum purchase requirement not met');
-          setCouponStatus('');
           toast.error('Minimum purchase requirement not met');
         }
       } else {
-        setCouponError(response.data.message || 'Invalid coupon');
-        setCouponStatus('');
         toast.error(response.data.message || 'Invalid coupon');
       }
     } catch (error) {
-      console.error('Error applying coupon:', error);
-      setCouponError('Failed to apply coupon. Please try again.');
-      setCouponStatus('');
       toast.error('Failed to apply coupon');
     }
   };
-
   const removeCoupon = () => {
     setAppliedCoupon(null);
     setCouponCode('');
-    setCouponStatus('');
-    setCouponError('');
     toast.success('Coupon removed');
   };
 
   const fetchCoupons = async () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/client/available-coupons`, { withCredentials: true });
-      console.log('Coupons response:', response.data); // Debug log
       if (response.data.success) {
         setCoupons(response.data.coupons);
         setShowCoupons(true);
-        setCouponError('');
       } else {
-        setCouponError(response.data.message || 'No available coupons');
         toast.error(response.data.message || 'No available coupons');
       }
     } catch (error) {
-      console.error('Error fetching coupons:', error);
-      setCouponError('Failed to load coupons. Please try again.');
       toast.error('Failed to load coupons');
     }
   };
@@ -247,7 +247,7 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
   const fetchPaymentIntent = async (url, body, retries = 3) => {
     for (let i = 0; i < retries; i++) {
       try {
-        const response = await axios.post(url, body, { withCredentials: true });
+        const response = await axios.post(import.meta.env.VITE_API_URL+'/api/client'+ url, body, { withCredentials: true });
         return response;
       } catch (error) {
         if (i === retries - 1) throw error;
@@ -259,23 +259,19 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!stripe || !elements) {
-      setCardError('Payment system not loaded. Please try again.');
       toast.error('Payment system not loaded. Please try again.');
       return;
     }
     if (formData.email !== formData.confirm_email) {
-      setCardError('Emails do not match');
       toast.error('Emails do not match');
       return;
     }
     if (!formData.accept_terms) {
-      setCardError('You must accept the terms and conditions');
       toast.error('You must accept the terms and conditions');
       return;
     }
 
     setSubmitting(true);
-    setCardError('');
 
     try {
       const paymentIntentUrl = isShow ? '/packageCart/create-payment-intent' : '/bookPackage/create-payment-intent';
@@ -297,8 +293,6 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
 
       const response = await fetchPaymentIntent(paymentIntentUrl, requestBody);
       if (!response.data.success) {
-        setCardError(response.data.message || 'Failed to create payment intent');
-        setSubmitting(false);
         toast.error(response.data.message || 'Failed to create payment intent');
         return;
       }
@@ -326,8 +320,6 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
       });
 
       if (result.error) {
-        setCardError(result.error.message);
-        setSubmitting(false);
         toast.error(result.error.message);
         return;
       }
@@ -352,15 +344,12 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
 
       const confirmResponse = await axios.post(confirmUrl, confirmBody, { withCredentials: true });
       if (confirmResponse.data.success) {
-        navigate(isShow ? `${import.meta.env.VITE_API_URL}/api/client/packageCart/confirmation` : `${import.meta.env.VITE_API_URL}/api/client/bookPackage/confirmation/${confirmResponse.data.booking._id}`);
+        navigate(`/confirmation/${confirmResponse.data.booking._id}?isShow=${isShow}&isShowAll=true`);
         toast.success('Booking confirmed successfully');
       } else {
-        setCardError(confirmResponse.data.message || 'Failed to confirm booking');
         toast.error(confirmResponse.data.message || 'Failed to confirm booking');
       }
     } catch (error) {
-      console.error('Submission error:', error);
-      setCardError('An error occurred. Please try again.');
       toast.error('An error occurred. Please try again.');
     } finally {
       setSubmitting(false);
@@ -397,12 +386,6 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
         }
         .booking-form-wrap textarea.form-control {
           min-height: 100px;
-        }
-        .booking-form-wrap .error {
-          color: red;
-          font-size: 0.9rem;
-          margin-top: -10px;
-          margin-bottom: 10px;
         }
         .form-title {
           display: flex;
@@ -539,19 +522,6 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
           opacity: 0.6;
           background: #6c757d;
         }
-        .button-loading {
-          display: none;
-        }
-        .button-primary:disabled .button-text {
-          display: none;
-        }
-        .button-primary:disabled .button-loading {
-          display: inline-flex;
-          align-items: center;
-        }
-        .button-loading .fa-spinner {
-          margin-right: 8px;
-        }
         #card-element {
           padding: 10px;
           border: 1px solid #ddd;
@@ -569,12 +539,13 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
                 <input type="hidden" name="quantity" value={quantities[0] || cart.items[0].quantity} />
               </>
             )}
-            {isShow && cart.items.map((item, index) => (
-              <div key={index}>
-                <input type="hidden" name={`items[${index}][packageId]`} value={item.packageId._id} />
-                <input type="hidden" name={`items[${index}][quantity]`} value={quantities[index] || item.quantity} />
-              </div>
-            ))}
+            {isShow &&
+              cart.items.map((item, index) => (
+                <div key={index}>
+                  <input type="hidden" name={`items[${index}][packageId]`} value={item.packageId._id} />
+                  <input type="hidden" name={`items[${index}][quantity]`} value={quantities[index] || item.quantity} />
+                </div>
+              ))}
             <div className="booking-content">
               <div className="form-title">
                 <span>1</span>
@@ -673,27 +644,22 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
                       <div className="form-group">
                         <label>Card Details*</label>
                         <div id="card-element">
-                          <CardElement options={{
-                            style: {
-                              base: {
-                                fontSize: '16px',
-                                color: '#32325d',
-                                '::placeholder': { color: '#aab7c4' },
+                          <CardElement
+                            options={{
+                              style: {
+                                base: {
+                                  fontSize: '16px',
+                                  color: '#32325d',
+                                  '::placeholder': { color: '#aab7c4' },
+                                },
                               },
-                            },
-                          }} />
+                            }}
+                          />
                         </div>
                       </div>
                     </div>
                     <div className="col-sm-6">
                       <img src="/assets/images/cards.png" alt="Cards" style={{ maxWidth: '200px' }} />
-                    </div>
-                  </div>
-                </div>
-                <div className="col-12">
-                  <div className="form-group">
-                    <div id="card-errors" className="error" style={{ display: cardError ? 'block' : 'none' }}>
-                      {cardError}
                     </div>
                   </div>
                 </div>
@@ -815,15 +781,8 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
                   I accept terms and conditions and general policy.
                 </label>
               </div>
-              <button
-                type="submit"
-                className="button-primary"
-                disabled={submitting || !stripe}
-              >
-                <span className="button-text">{submitting ? 'Processing...' : 'Book Now'}</span>
-                <span className="button-loading">
-                  <i className="fas fa-spinner fa-spin"></i> Processing...
-                </span>
+              <button type="submit" className="button-primary" disabled={submitting || !stripe}>
+                <span className="">{submitting ? 'Processing...' : 'Book Now'}</span>
               </button>
             </div>
           </form>
@@ -868,24 +827,36 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
                   </tr>
                 )}
                 <tr>
-                  <td><strong>Dedicated tour guide</strong></td>
+                  <td>
+                    <strong>Dedicated tour guide</strong>
+                  </td>
                   <td className="text-right">$34.00</td>
                 </tr>
                 <tr>
-                  <td><strong>Insurance</strong></td>
+                  <td>
+                    <strong>Insurance</strong>
+                  </td>
                   <td className="text-right">$34.00</td>
                 </tr>
                 <tr>
-                  <td><strong>Tax (13%)</strong></td>
+                  <td>
+                    <strong>Tax (13%)</strong>
+                  </td>
                   <td className="text-right">${tax.toFixed(2)}</td>
                 </tr>
                 <tr>
-                  <td><strong>Discount</strong></td>
+                  <td>
+                    <strong>Discount</strong>
+                  </td>
                   <td className="text-right">-${discount.toFixed(2)}</td>
                 </tr>
                 <tr className="total">
-                  <td><strong>Total cost</strong></td>
-                  <td className="text-right"><strong>${total.toFixed(2)}</strong></td>
+                  <td>
+                    <strong>Total cost</strong>
+                  </td>
+                  <td className="text-right">
+                    <strong>${total.toFixed(2)}</strong>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -908,32 +879,28 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
                   if (couponCode) {
                     applyCoupon(couponCode);
                   } else {
-                    setCouponError('Please enter a coupon code');
                     toast.error('Please enter a coupon code');
                   }
                 }}
-                style={{ background: '#007bff' }}
+                style={{ display: appliedCoupon ? 'none' : 'inline-block', background: '#007bff' }}
               >
-                <span className=" text-white">Apply</span>
+                <span className="text-white">Apply</span>
               </button>
               <button
                 type="button"
                 className="button-primary"
                 onClick={removeCoupon}
-                style={{ display: appliedCoupon ? 'none' : 'inline-block', background: '#dc3545' }}
+                style={{ display: appliedCoupon ? 'inline-block' : 'none', background: '#dc3545' }}
               >
-                <span className=" text-white">Remove</span>
+                <span className="text-white">Remove</span>
               </button>
             </div>
-            <p id="coupon-status" style={{ marginTop: '10px', color: 'green', fontWeight: 'bold', display: couponStatus ? 'block' : 'none' }}>
-              {couponStatus}
-            </p>
-            <p id="coupon-error" style={{ marginTop: '10px', color: 'red', fontWeight: 'bold', display: couponError ? 'block' : 'none' }}>
-              {couponError}
-            </p>
             <a
               href="#"
-              onClick={(e) => { e.preventDefault(); fetchCoupons(); }}
+              onClick={(e) => {
+                e.preventDefault();
+                fetchCoupons();
+              }}
               style={{ display: 'block', marginTop: '10px', color: '#007bff', textDecoration: 'underline', fontSize: '14px' }}
             >
               Available Coupons
@@ -945,7 +912,9 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
             </div>
             <div className="support-content">
               <h5>HELP AND SUPPORT</h5>
-              <a href="tel:+1123488900" className="phone">+11 234 889 00</a>
+              <a href="tel:+1123488900" className="phone">
+                +11 234 889 00
+              </a>
               <small>Monday to Friday 9.00am - 7.30pm</small>
             </div>
           </div>
@@ -953,9 +922,9 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
         {showCoupons && (
           <CouponPopup
             coupons={coupons}
-            onApply={(code) => {
+            onApply={async (code) => {
+              await applyCoupon(code);
               setCouponCode(code);
-              applyCoupon(code);
               setShowCoupons(false);
             }}
             onClose={() => setShowCoupons(false)}
@@ -985,7 +954,9 @@ function BookingPage() {
           return;
         }
 
-        const url = isShow ? `${import.meta.env.VITE_API_URL}/api/client/packageCart/checkout` : `${import.meta.env.VITE_API_URL}/api/client/bookPackage/${packageId}`;
+        const url = isShow
+          ? `${import.meta.env.VITE_API_URL}/api/client/packageCart/checkout`
+          : `${import.meta.env.VITE_API_URL}/api/client/bookPackage/${packageId}`;
         const response = await axios.get(url, { withCredentials: true });
 
         if (response.data.success) {
@@ -993,12 +964,10 @@ function BookingPage() {
           setUserData(response.data.user);
           setStripeKey(response.data.stripeKey);
         } else {
-          console.log(response);
           toast.error(response.data.message || 'Failed to load booking data');
           navigate('/package-cart');
         }
       } catch (error) {
-        console.error('Error fetching booking data:', error);
         toast.error(error.response?.data?.message || 'Server error');
         navigate('/package-cart');
       } finally {
