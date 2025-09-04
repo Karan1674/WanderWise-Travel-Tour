@@ -90,11 +90,11 @@ function TourDetail() {
 
     return () => {
       ratingInputs.forEach((input) => {
-        input.removeEventListener('change', () => {});
+        input.removeEventListener('change', () => { });
       });
       ratingLabels.forEach((label) => {
-        label.removeEventListener('mouseenter', () => {});
-        label.removeEventListener('mouseleave', () => {});
+        label.removeEventListener('mouseenter', () => { });
+        label.removeEventListener('mouseleave', () => { });
       });
     };
   }, [formData.rating]);
@@ -240,7 +240,7 @@ function TourDetail() {
                   </div>
                 </figure>
                 <div className="tab-container">
-                  <ul className="nav nav-tabs" id="myTab" role="tablist" style={{listStyle:'none'}}>
+                  <ul className="nav nav-tabs" id="myTab" role="tablist" style={{ listStyle: 'none' }}>
                     <li className="nav-item">
                       <a
                         className="nav-link active"
@@ -329,44 +329,26 @@ function TourDetail() {
                     <div className="tab-pane fade" id="program" role="tabpanel" aria-labelledby="program-tab">
                       <div className="itinerary-content">
                         <h3>
-                          Itinerary Overview <span>({pkg.tripDuration?.days || 4} days)</span>
+                          Program Overview <span>({pkg.tripDuration?.days || 4} days)</span>
                         </h3>
                         <p>
                           {pkg.programDescription ||
                             'Dolores maiores dicta dolore. Natoque placeat libero sunt sagittis debitis? Egestas non non qui quos, semper aperiam lacinia eum nam! Pede beatae. Soluta, convallis irure accusamus voluptatum ornare saepe cupidatat.'}
                         </p>
                       </div>
-                      <div className="tour-program-timeline-wrap">
+                      <div className="itinerary-timeline-wrap">
                         {pkg.programDays && pkg.programDays.length > 0 ? (
-                          <div className="accordion accordion-flush" id="programAccordion">
+                          <ul>
                             {pkg.programDays.map((day, index) => (
-                              <div className="tour-program-accordion-item" key={index}>
-                                <div
-                                  className="tour-program-accordion-header"
-                                  id={`programHeading${index}`}
-                                  data-bs-toggle="collapse"
-                                  data-bs-target={`#programCollapse${index}`}
-                                  aria-expanded={index === 0 ? 'true' : 'false'}
-                                  aria-controls={`programCollapse${index}`}
-                                >
-                                  <h3>
-                                    <i className="fas fa-calendar-day"></i> Day {day.day}
-                                    <i className="fas fa-chevron-down toggle-icon"></i>
-                                  </h3>
+                              <li key={index}>
+                                <div class="timeline-content" style={{width:'100%'}}>
+                                  <div class="day-count">Day <span>{day.day}</span></div>
+                                  <h4>{day.title}</h4>
+                                  <p>{day.description}</p>
                                 </div>
-                                <div
-                                  id={`programCollapse${index}`}
-                                  className={`accordion-collapse collapse ${index === 0 ? 'show' : ''}`}
-                                  aria-labelledby={`programHeading${index}`}
-                                  data-bs-parent="#programAccordion"
-                                >
-                                  <div className="tour-program-accordion-body">
-                                    <p>{day.description}</p>
-                                  </div>
-                                </div>
-                              </div>
+                              </li>
                             ))}
-                          </div>
+                          </ul>
                         ) : (
                           <p className="text-muted">No Programs scheduled for the day.</p>
                         )}
@@ -906,29 +888,29 @@ function TourDetail() {
         </div>
       </div>
 
-{!user && (
-      <section className="subscribe-section" style={{ backgroundImage: 'url(/assets/images/img16.jpg)' }}>
-        <div className="container">
-          <div className="row">
-            <div className="col-lg-7">
-              <div className="section-heading section-heading-white">
-                <h5 className="dash-style">HOLIDAY PACKAGE OFFER</h5>
-                <h2>HOLIDAY SPECIAL {pkg && pkg.discount ? pkg.discount + '% OFF' : '25% OFF'}!</h2>
-                <h4>Sign up now to receive hot special offers and information about the best tour packages, updates, and discounts!</h4>
-                <div className="newsletter-form">
-                  <form action="/subscribe" method="POST">
-                    <input type="email" name="email" placeholder="Your Email Address" required />
-                    <input type="submit" name="signup" value="SIGN UP NOW!" />
-                  </form>
+      {!user && (
+        <section className="subscribe-section" style={{ backgroundImage: 'url(/assets/images/img16.jpg)' }}>
+          <div className="container">
+            <div className="row">
+              <div className="col-lg-7">
+                <div className="section-heading section-heading-white">
+                  <h5 className="dash-style">HOLIDAY PACKAGE OFFER</h5>
+                  <h2>HOLIDAY SPECIAL {pkg && pkg.discount ? pkg.discount + '% OFF' : '25% OFF'}!</h2>
+                  <h4>Sign up now to receive hot special offers and information about the best tour packages, updates, and discounts!</h4>
+                  <div className="newsletter-form">
+                    <form action="/subscribe" method="POST">
+                      <input type="email" name="email" placeholder="Your Email Address" required />
+                      <input type="submit" name="signup" value="SIGN UP NOW!" />
+                    </form>
+                  </div>
+                  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.</p>
                 </div>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.</p>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-)}
+      )}
     </div>
   );
 }
