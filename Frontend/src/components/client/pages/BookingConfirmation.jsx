@@ -115,16 +115,16 @@ function BookingConfirmation() {
             {isShow && (
               <div className="step-item active">
                 Your cart
-                <a href="#" className="step-icon"></a>
+                <Link to="#" className="step-icon"></Link>
               </div>
             )}
             <div className="step-item active">
               Your Details
-              <a href="#" className="step-icon"></a>
+              <Link to="#" className="step-icon"></Link>
             </div>
             <div className="step-item active">
               Finish
-              <a href="#" className="step-icon"></a>
+              <Link to="#" className="step-icon"></Link>
             </div>
           </div>
           )}
@@ -224,9 +224,9 @@ function BookingConfirmation() {
                       <h3>VIEW BOOKING DETAILS</h3>
                       <div className="details-desc">
                         <p>
-                          <a href={`booking/${booking._id || '#'}`}>
+                          <Link to={`booking/${booking._id || '#'}`}>
                             https://www.wanderwise.com/booking/{booking._id || 'N/A'}
-                          </a>
+                          </Link>
                         </p>
                       </div>
                     </div>

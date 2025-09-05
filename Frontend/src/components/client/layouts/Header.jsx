@@ -39,14 +39,14 @@ function Header() {
               <div className="header-contact-info">
                 <ul>
                   <li>
-                    <a href="#">
+                    <NavLink to="#">
                       <i className="fas fa-phone-alt"></i> +01 (977) 2599 12
-                    </a>
+                    </NavLink>
                   </li>
                   <li>
-                    <a href="mailto:info@Travel.com">
+                    <NavLink to="mailto:info@Travel.com">
                       <i className="fas fa-envelope"></i> company@domain.com
-                    </a>
+                    </NavLink>
                   </li>
                   <li>
                     <i className="fas fa-map-marker-alt"></i> 3146 Koontz Lane, California
@@ -58,24 +58,24 @@ function Header() {
               <div className="header-social social-links">
                 <ul>
                   <li>
-                    <a href="#">
+                    <NavLink to="#">
                       <i className="fab fa-facebook-f" aria-hidden="true"></i>
-                    </a>
+                    </NavLink>
                   </li>
                   <li>
-                    <a href="#">
+                    <NavLink to="#">
                       <i className="fab fa-twitter" aria-hidden="true"></i>
-                    </a>
+                    </NavLink>
                   </li>
                   <li>
-                    <a href="#">
+                    <NavLink to="#">
                       <i className="fab fa-instagram" aria-hidden="true"></i>
-                    </a>
+                    </NavLink>
                   </li>
                   <li>
-                    <a href="#">
+                    <NavLink to="#">
                       <i className="fab fa-linkedin" aria-hidden="true"></i>
-                    </a>
+                    </NavLink>
                   </li>
                 </ul>
               </div>
@@ -103,7 +103,7 @@ function Header() {
                   </NavLink>
                 </li>
                 <li className="menu-item-has-children">
-                  <a href="#">Tour</a>
+                  <NavLink to="#">Tour</NavLink>
                   <ul>
                     <li>
                       <NavLink to="/destination">Destination</NavLink>
@@ -120,7 +120,7 @@ function Header() {
                
 
                 <li className="menu-item-has-children">
-                  <a href="#">Discover</a>
+                  <NavLink to="#">Discover</NavLink>
                   <ul>
                   <li>
                   <NavLink to="/services">Service</NavLink>
@@ -160,7 +160,7 @@ function Header() {
                 </li> */}
                 {user ? (
                   <li className="menu-item-has-children">
-                    <a href="#">Dashboard</a>
+                    <NavLink to="#">Dashboard</NavLink>
                     <ul>
                       <li>
                         <NavLink to="/user-profile">Profile</NavLink>

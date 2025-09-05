@@ -1,3 +1,4 @@
+import { NavLink } from "react-router-dom";
 
 
 function About() {
@@ -76,9 +77,9 @@ function About() {
             </div>
             <div className="about-video-wrap" style={{ backgroundImage: 'url(/assets/images/img25.jpg)' }}>
               <div className="video-button">
-                <a id="video-container" data-video-id="IUN664s7N-c">
+                <NavLink id="video-container" data-video-id="IUN664s7N-c">
                   <i className="fas fa-play"></i>
-                </a>
+                </NavLink>
               </div>
             </div>
           </div>

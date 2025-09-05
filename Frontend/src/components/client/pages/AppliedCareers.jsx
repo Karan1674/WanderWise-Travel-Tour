@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import Loader from '../layouts/Loader';
@@ -126,9 +126,9 @@ function AppliedCareers() {
                           <td>{(currentPage - 1) * limit + index + 1}.</td>
                           <td>{application._id}</td>
                           <td>
-                            <a href={`/careers/${application.careerId._id}`} className="package-name">
+                            <Link to={`/careers/${application.careerId._id}`} className="package-name">
                               {application.careerId.title}
-                            </a>
+                            </Link>
                           </td>
                           <td>
                             <span
@@ -151,8 +151,8 @@ function AppliedCareers() {
                 </div>
                 <div className="pagination">
                   {currentPage > 1 ? (
-                    <a
-                      href={`/applied-careers?page=${currentPage - 1}&search=${encodeURIComponent(search)}`}
+                    <Link
+                      to={`/applied-careers?page=${currentPage - 1}&search=${encodeURIComponent(search)}`}
                       className="pagination-link pagination-prev"
                       onClick={(e) => {
                         e.preventDefault();
@@ -160,7 +160,7 @@ function AppliedCareers() {
                       }}
                     >
                       <i className="fas fa-chevron-left"></i>
-                    </a>
+                    </Link>
                   ) : (
                     <span className="pagination-link pagination-disabled">
                       <i className="fas fa-chevron-left"></i>
@@ -176,9 +176,9 @@ function AppliedCareers() {
                     const pages = [];
                     for (let i = startPage; i <= endPage; i++) {
                       pages.push(
-                        <a
+                        <Link
                           key={i}
-                          href={`/applied-careers?page=${i}&search=${encodeURIComponent(search)}`}
+                          to={`/applied-careers?page=${i}&search=${encodeURIComponent(search)}`}
                           className={`pagination-link ${i === currentPage ? 'active' : ''}`}
                           onClick={(e) => {
                             e.preventDefault();
@@ -186,14 +186,14 @@ function AppliedCareers() {
                           }}
                         >
                           {i}
-                        </a>
+                        </Link>
                       );
                     }
                     return pages;
                   })()}
                   {currentPage < totalPages ? (
-                    <a
-                      href={`/applied-careers?page=${currentPage + 1}&search=${encodeURIComponent(search)}`}
+                    <Link
+                      to={`/applied-careers?page=${currentPage + 1}&search=${encodeURIComponent(search)}`}
                       className="pagination-link pagination-next"
                       onClick={(e) => {
                         e.preventDefault();
@@ -201,7 +201,7 @@ function AppliedCareers() {
                       }}
                     >
                       <i className="fas fa-chevron-right"></i>
-                    </a>
+                    </Link>
                   ) : (
                     <span className="pagination-link pagination-disabled">
                       <i className="fas fa-chevron-right"></i>
@@ -214,9 +214,9 @@ function AppliedCareers() {
                 <span className="text-secondary" style={{ fontSize: '17px' }}>
                   No applications found
                 </span>
-                <a className="mt-2" href="/careers">
+                <Link className="mt-2" to="/careers">
                   <button className="button-secondary">Explore Careers</button>
-                </a>
+                </Link>
               </div>
             )}
           </div>

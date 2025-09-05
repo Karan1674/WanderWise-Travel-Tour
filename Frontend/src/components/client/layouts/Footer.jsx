@@ -13,12 +13,12 @@ function Footer() {
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.
                 </div>
                 <div className="award-img">
-                  <a href="#">
+                  <NavLink to="#">
                     <img src="/assets/images/logo6.png" alt="" />
-                  </a>
-                  <a href="#">
+                  </NavLink>
+                  <NavLink to="#">
                     <img src="/assets/images/logo2.png" alt="" />
-                  </a>
+                  </NavLink>
                 </div>
               </aside>
             </div>
@@ -29,14 +29,14 @@ function Footer() {
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit.
                   <ul>
                     <li>
-                      <a href="#">
+                      <NavLink to="#">
                         <i className="fas fa-phone-alt"></i> +01 (977) 2599 12
-                      </a>
+                      </NavLink>
                     </li>
                     <li>
-                      <a href="#">
+                      <NavLink to="#">
                         <i className="fas fa-envelope"></i> company@domain.com
-                      </a>
+                      </NavLink>
                     </li>
                     <li>
                       <i className="fas fa-map-marker-alt"></i> 3146 Koontz, California

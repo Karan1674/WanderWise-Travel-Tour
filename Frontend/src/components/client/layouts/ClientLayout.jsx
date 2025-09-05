@@ -3,9 +3,17 @@ import Header from './Header.jsx';
 import Loader from './Loader.jsx';
 import Footer from './Footer.jsx';
 import '../../../styles/client.scss'
-
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 function Layout() {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (window.runCustomInit) {
+      window.runCustomInit();
+    }
+  }, [location]);
 
 
   return (

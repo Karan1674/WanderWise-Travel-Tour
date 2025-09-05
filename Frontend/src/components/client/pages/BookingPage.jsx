@@ -895,8 +895,8 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
                 <span className="text-white">Remove</span>
               </button>
             </div>
-            <a
-              href="#"
+            <Link
+              to="#"
               onClick={(e) => {
                 e.preventDefault();
                 fetchCoupons();
@@ -904,7 +904,7 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
               style={{ display: 'block', marginTop: '10px', color: '#007bff', textDecoration: 'underline', fontSize: '14px' }}
             >
               Available Coupons
-            </a>
+            </Link>
           </div>
           <div className="widget-support-wrap">
             <div className="icon">
@@ -912,9 +912,9 @@ function BookingForm({ cart, user, isShow, stripeKey }) {
             </div>
             <div className="support-content">
               <h5>HELP AND SUPPORT</h5>
-              <a href="tel:+1123488900" className="phone">
+              <Link to="tel:+1123488900" className="phone">
                 +11 234 889 00
-              </a>
+              </Link>
               <small>Monday to Friday 9.00am - 7.30pm</small>
             </div>
           </div>
@@ -1021,16 +1021,16 @@ function BookingPage() {
             {isShow && (
               <div className="step-item active">
                 Your cart
-                <a href="#" className="step-icon"></a>
+                <Link to="#" className="step-icon"></Link>
               </div>
             )}
             <div className="step-item active">
               Your Details
-              <a href="#" className="step-icon"></a>
+              <Link to="#" className="step-icon"></Link>
             </div>
             <div className="step-item">
               Finish
-              <a href="#" className="step-icon"></a>
+              <Link to="#" className="step-icon"></Link>
             </div>
           </div>
           <Elements stripe={loadStripe(stripeKey)}>
