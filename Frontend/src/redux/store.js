@@ -1,4 +1,5 @@
-import { configureStore, combineReducers } from '@reduxjs/toolkit';
+// store.js
+import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import {
   persistStore,
   persistReducer,
@@ -8,38 +9,51 @@ import {
   PERSIST,
   PURGE,
   REGISTER,
-} from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
-import expireReducer from 'redux-persist-transform-expire';
+} from "redux-persist";
+import storage from "redux-persist/lib/storage";
+import { createTransform } from "redux-persist";
 
-import authSlice from './slices/authSlice';
-import agentSlice from './slices/agentSlice';
-import packageSlice from './slices/packageSlice';
-import packageBookingSlice from './slices/packageBookingSlice';
-import couponSlice from './slices/couponSlice';
-import careerSlice from './slices/careerSlice';
-import applicationSlice from './slices/applicationSlice';
-import contactEnquirySlice from './slices/contactEnquirySlice';
-import faqEnquirySlice from './slices/faqEnquirySlice';
+// import slices
+import authSlice from "./slices/authSlice";
+import agentSlice from "./slices/agentSlice";
+import packageSlice from "./slices/packageSlice";
+import packageBookingSlice from "./slices/packageBookingSlice";
+import couponSlice from "./slices/couponSlice";
+import careerSlice from "./slices/careerSlice";
+import applicationSlice from "./slices/applicationSlice";
+import contactEnquirySlice from "./slices/contactEnquirySlice";
+import faqEnquirySlice from "./slices/faqEnquirySlice";
 
-
-
-const expireAuthAndOthers = expireReducer({
-  expireSeconds: 86400, // 24 hours
-  expiredState: {},
-  onExpire: () => {
-    storage.removeItem('persist:root'); 
+// ---------- Expiration Transform (24 hours) ----------
+const expireTransform = createTransform(
+  (inboundState) => {
+    return {
+      ...inboundState,
+      _persistedAt: Date.now(), // save timestamp
+    };
   },
-});
+  (outboundState) => {
+    if (!outboundState?._persistedAt) return outboundState;
 
-// Root persist config
+    const now = Date.now();
+    const expireTime = 86400 * 1000; // 24h in ms
+
+    if (now - outboundState._persistedAt > expireTime) {
+      return {}; // expired → reset state
+    }
+    return outboundState;
+  },
+  { whitelist: ["auth", "agents", "packages", "packageBookings", "coupons", "careers", "applications", "contactEnquiries", "faqEnquiries"] }
+);
+
+// ---------- Root Persist Config ----------
 const persistConfig = {
-  key: 'root',
+  key: "root",
   storage,
-  transforms: [expireAuthAndOthers],
+  transforms: [expireTransform],
 };
 
-// Combine reducers
+// ---------- Root Reducer ----------
 const rootReducer = combineReducers({
   auth: authSlice,
   agents: agentSlice,
@@ -52,10 +66,10 @@ const rootReducer = combineReducers({
   faqEnquiries: faqEnquirySlice,
 });
 
-// Persisted reducer
+// ---------- Persisted Reducer ----------
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 
-// Create store
+// ---------- Store ----------
 const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
